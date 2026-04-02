@@ -45,8 +45,7 @@
     "genkit": "0.5.5",
     "@genkit-ai/google-genai": "0.5.5",
     "@genkit-ai/ai": "0.5.5"
-  },
-  },
+    },
   "devDependencies": {
     "typescript": "^5",
     "@types/node": "^20",
