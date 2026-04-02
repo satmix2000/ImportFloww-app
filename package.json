@@ -21,7 +21,7 @@
   "react-hook-form": "^7.51.3",
   "zod": "^3.23.4",
   "@hookform/resolvers": "^3.3.4",
-  "lucide-react": "^0.378.0"
+  "lucide-react": "^0.378.0",
    "@genkit-ai/google-genai": "latest",
 "genkit": "latest",
 "@genkit-ai/ai": "latest"
