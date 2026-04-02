@@ -42,9 +42,9 @@
     "@hookform/resolvers": "^3.3.4",
     "lucide-react": "^0.378.0",
     "dotenv": "^16.4.5",
-    "genkit": "0.5.5",
-    "@genkit-ai/google-genai": "0.5.5",
-    "@genkit-ai/ai": "0.5.5"
+    "@genkit-ai/google-genai": "latest",
+    "genkit": "latest",
+    "@genkit-ai/ai": "latest"
     },
   "devDependencies": {
     "typescript": "^5",
