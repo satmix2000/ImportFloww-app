@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, Info } from "lucide-react";
+import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2 } from "lucide-react";
 
 import {
   Form,
@@ -198,7 +197,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 <CardTitle className="font-headline tracking-tight">Logística y Flete</CardTitle>
               </div>
               <CardDescription className="text-slate-300">
-                Los cargos adicionales (FSC, Almacenaje, etc.) se calculan automáticamente.
+                Los cargos adicionales se calculan automáticamente según el peso.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,51 +230,18 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="miscellaneous"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Otros Gastos Especiales (USD)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormDescription className="text-[10px]">Gastos adicionales no contemplados en las reglas estándar.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
-          {/* Aduana */}
+          {/* Aduana e IA */}
           <Card className="border-none shadow-md bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-slate-100 text-slate-900 border-b pb-4">
               <div className="flex items-center gap-2">
                 <Landmark className="w-5 h-5 text-primary" />
-                <CardTitle className="font-headline tracking-tight text-lg">Impuestos y VUCE</CardTitle>
+                <CardTitle className="font-headline tracking-tight text-lg">Impuestos e Inteligencia NCM</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
-              <FormField
-                control={form.control}
-                name="usdToArsRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cotización Dólar Blue (USD/ARS)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input type="number" step="1" {...field} />
-                        <RefreshCcw className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground opacity-50 cursor-pointer" onClick={fetchRates} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Separator className="my-2" />
-
               <FormField
                 control={form.control}
                 name="productDescription"
@@ -287,37 +253,48 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-7 text-[10px] gap-1 border-accent text-accent-foreground"
+                        className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold"
                         onClick={handleAiAssist}
                         disabled={isAiLoading}
                       >
                         <Sparkles className="w-3 h-3" />
-                        {isAiLoading ? "Consultando VUCE..." : "Asistente NCM"}
+                        {isAiLoading ? "Consultando VUCE..." : "ASISTENTE NCM"}
                       </Button>
                     </div>
                     <FormControl>
-                      <Input placeholder="Ej. Placa de video para workstation..." {...field} />
+                      <Input placeholder="Ej. Microprocesador intel core i7..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* CONTENEDOR DE SUGERENCIAS CON ANÁLISIS TÉCNICO */}
               {aiSuggestions.length > 0 && (
-                <div className="bg-muted/50 p-3 rounded-md border space-y-2">
-                  <div className="flex flex-wrap gap-2">
+                <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 space-y-3">
+                  <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Sugerencias Arancelarias:</p>
+                  <div className="flex flex-col gap-3">
                     {aiSuggestions.map((s, i) => (
                       <Badge
                         key={i}
                         variant="secondary"
-                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 text-left flex flex-col items-start gap-1 w-full"
+                        className="cursor-pointer hover:bg-blue-100/80 p-3 text-left flex flex-col items-start gap-2 w-full transition-all border-blue-200 bg-white"
                         onClick={() => selectSuggestion(s)}
                       >
-                        <div className="flex justify-between w-full">
-                          <span className="font-bold">{s.hsCode}</span>
+                        <div className="flex justify-between w-full border-b border-blue-100 pb-1">
+                          <span className="font-bold text-sm text-slate-800">{s.hsCode}</span>
                           <span className="font-bold text-primary">DIE: {s.suggestedTariffRate}%</span>
                         </div>
-                        <div className="flex justify-between w-full text-[10px] opacity-70">
+
+                        {/* ANÁLISIS TÉCNICO DE LA IA */}
+                        {s.reasoning && (
+                          <p className="text-[11px] leading-tight text-slate-600 italic bg-slate-50/50 p-2 rounded w-full">
+                            <span className="font-semibold not-italic text-blue-800 mr-1">Análisis:</span>
+                            {s.reasoning}
+                          </p>
+                        )}
+
+                        <div className="flex justify-between w-full text-[10px] font-bold text-blue-700/70 pt-1">
                           <span>Est: {s.suggestedStatisticalFee}%</span>
                           <span>IVA: {s.suggestedVatRate}%</span>
                         </div>
@@ -327,26 +304,13 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <FormField
                   control={form.control}
                   name="tariffRate"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>DIE (%)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="statisticalFee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estadística (%)</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.1" {...field} />
                       </FormControl>
@@ -367,25 +331,12 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="hsCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Posición NCM</FormLabel>
-                      <FormControl>
-                        <Input placeholder="NCM" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </Card>
 
           <Button type="submit" className="w-full h-12 text-lg font-bold bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg">
-            Calcular Costo Final
+            CALCULAR COSTO TOTAL
           </Button>
         </form>
       </Form>
