@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2 } from "lucide-react";
+import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink } from "lucide-react";
 
 import {
   Form,
@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { suggestHsCode, type HsCodeSuggestionOutput } from "@/ai/flows/hs-code-suggestion";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculator-utils";
@@ -31,7 +30,7 @@ const formSchema = z.object({
   miscellaneous: z.coerce.number().min(0, "Debe ser positivo").default(0),
   productDescription: z.string().min(5, "Descripción muy corta"),
   hsCode: z.string().optional(),
-  tariffRate: z.coerce.number().min(0).max(100).default(0),
+  tariffRate: z.coerce.number().min(0).max(100).default(18), // Ajustado al 18% Extrazona común
   statisticalFee: z.coerce.number().min(0).max(100).default(3),
   vatRate: z.coerce.number().min(0).max(100).default(21),
   usdToArsRate: z.coerce.number().min(1, "Tasa inválida").default(1100),
@@ -58,7 +57,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       miscellaneous: 0,
       productDescription: "",
       hsCode: "",
-      tariffRate: 0,
+      tariffRate: 18,
       statisticalFee: 3,
       vatRate: 21,
       usdToArsRate: 1100,
@@ -70,44 +69,30 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     try {
       const marketResponse = await fetch("https://open.er-api.com/v6/latest/USD");
       const marketData = await marketResponse.json();
-      
-      if (marketData && marketData.rates && marketData.rates.CNY) {
-        const cnyToUsd = 1 / marketData.rates.CNY;
-        form.setValue("exchangeRate", Number(cnyToUsd.toFixed(4)));
+      if (marketData?.rates?.CNY) {
+        form.setValue("exchangeRate", Number((1 / marketData.rates.CNY).toFixed(4)));
       }
-
       const arsResponse = await fetch("https://dolarapi.com/v1/dolares/blue");
       const arsData = await arsResponse.json();
-      
-      if (arsData && arsData.venta) {
+      if (arsData?.venta) {
         form.setValue("usdToArsRate", Math.round(arsData.venta));
       }
     } catch (error) {
-      console.error("Error fetching rates:", error);
+      console.error("Error rates:", error);
     } finally {
       setIsRatesLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchRates();
-  }, []);
+  useEffect(() => { fetchRates(); }, []);
 
   const watchCNY = form.watch("itemValueCNY");
   const watchRate = form.watch("exchangeRate");
   const usdEquivalent = (watchCNY || 0) * (watchRate || 0);
 
-  const onSubmit = (data: ImportFormData) => {
-    onCalculate(data);
-  };
-
   const handleAiAssist = async () => {
     const description = form.getValues("productDescription");
-    if (!description || description.length < 5) {
-      form.setError("productDescription", { message: "Describa su producto primero para usar la IA." });
-      return;
-    }
-
+    if (!description || description.length < 5) return;
     setIsAiLoading(true);
     try {
       const suggestions = await suggestHsCode({ productDescription: description });
@@ -119,24 +104,18 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     }
   };
 
-  const selectSuggestion = (suggestion: any) => {
-    form.setValue("hsCode", suggestion.hsCode);
-    if (suggestion.suggestedTariffRate !== undefined) {
-      form.setValue("tariffRate", suggestion.suggestedTariffRate);
-    }
-    if (suggestion.suggestedStatisticalFee !== undefined) {
-      form.setValue("statisticalFee", suggestion.suggestedStatisticalFee);
-    }
-    if (suggestion.suggestedVatRate !== undefined) {
-      form.setValue("vatRate", suggestion.suggestedVatRate);
-    }
+  const selectSuggestion = (s: any) => {
+    form.setValue("hsCode", s.hsCode);
+    if (s.suggestedTariffRate !== undefined) form.setValue("tariffRate", s.suggestedTariffRate);
+    if (s.suggestedStatisticalFee !== undefined) form.setValue("statisticalFee", s.suggestedStatisticalFee);
+    if (s.suggestedVatRate !== undefined) form.setValue("vatRate", s.suggestedVatRate);
   };
 
   return (
     <div className="grid gap-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Valor FOB */}
+        <form onSubmit={form.handleSubmit(onCalculate)} className="space-y-6">
+          {/* Card FOB */}
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-primary text-primary-foreground pb-6">
               <div className="flex justify-between items-center">
@@ -144,14 +123,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <Calculator className="w-5 h-5" />
                   <CardTitle className="font-headline tracking-tight">Valor FOB (China)</CardTitle>
                 </div>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-primary-foreground hover:bg-white/10"
-                  onClick={fetchRates}
-                  disabled={isRatesLoading}
-                >
+                <Button type="button" variant="ghost" size="icon" onClick={fetchRates} disabled={isRatesLoading}>
                   {isRatesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
                 </Button>
               </div>
@@ -163,9 +135,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Monto en Yuanes (¥)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                    </FormControl>
+                    <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                     <FormDescription className="text-xs font-bold text-primary">
                       Equivalente: {formatCurrency(usdEquivalent)} USD
                     </FormDescription>
@@ -178,10 +148,8 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="exchangeRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tasa (1 CNY = ? USD)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.0001" {...field} />
-                    </FormControl>
+                    <FormLabel>Tasa CNY/USD</FormLabel>
+                    <FormControl><Input type="number" step="0.0001" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -189,16 +157,13 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
             </CardContent>
           </Card>
 
-          {/* Logística */}
+          {/* Card Logística */}
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-slate-800 text-white pb-6">
               <div className="flex items-center gap-2">
                 <Truck className="w-5 h-5 text-accent" />
                 <CardTitle className="font-headline tracking-tight">Logística y Flete</CardTitle>
               </div>
-              <CardDescription className="text-slate-300">
-                Los cargos adicionales se calculan automáticamente según el peso.
-              </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
@@ -207,12 +172,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Peso Total (gramos)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input type="number" step="1" placeholder="0" {...field} />
-                        <Package className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground opacity-50" />
-                      </div>
-                    </FormControl>
+                    <FormControl><Input type="number" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -223,9 +183,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Flete por Kilo (USD)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
+                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -233,7 +191,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
             </CardContent>
           </Card>
 
-          {/* Aduana e IA */}
+          {/* Card Aduana e IA */}
           <Card className="border-none shadow-md bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-slate-100 text-slate-900 border-b pb-4">
               <div className="flex items-center gap-2">
@@ -249,115 +207,57 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
                       <FormLabel>Descripción del Producto</FormLabel>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold"
-                        onClick={handleAiAssist}
-                        disabled={isAiLoading}
-                      >
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold" onClick={handleAiAssist} disabled={isAiLoading}>
                         <Sparkles className="w-3 h-3" />
-                        {isAiLoading ? "Consultando VUCE..." : "ASISTENTE NCM"}
+                        {isAiLoading ? "Consultando..." : "ASISTENTE IA"}
                       </Button>
                     </div>
-                    <FormControl>
-                      <Input placeholder="Ej. Microprocesador intel core i7..." {...field} />
-                    </FormControl>
+                    <FormControl><Input placeholder="Ej. Sensor de proximidad..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* CONTENEDOR DE SUGERENCIAS CON ANÁLISIS TÉCNICO */}
+              {/* Sugerencias de IA */}
               {aiSuggestions.length > 0 && (
                 <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 space-y-3">
-                  <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Sugerencias Arancelarias:</p>
-                  <div className="flex flex-col gap-3">
+                  <p className="text-[10px] font-bold text-blue-800 uppercase">Sugerencias IA:</p>
+                  <div className="flex flex-col gap-2">
                     {aiSuggestions.map((s, i) => (
-                      <Badge
-                        key={i}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-blue-100/80 p-3 text-left flex flex-col items-start gap-2 w-full transition-all border-blue-200 bg-white"
-                        onClick={() => selectSuggestion(s)}
-                      >
-                        <div className="flex justify-between w-full border-b border-blue-100 pb-1">
+                      <Badge key={i} variant="secondary" className="cursor-pointer hover:bg-blue-100 p-3 text-left flex flex-col items-start w-full bg-white border-blue-200" onClick={() => selectSuggestion(s)}>
+                        <div className="flex justify-between w-full border-b border-blue-50 pb-1 mb-1">
                           <span className="font-bold text-sm text-slate-800">{s.hsCode}</span>
                           <span className="font-bold text-primary">DIE: {s.suggestedTariffRate}%</span>
                         </div>
-
-                        {/* ANÁLISIS TÉCNICO DE LA IA */}
-                        {s.reasoning && (
-                          <p className="text-[11px] leading-tight text-slate-600 italic bg-slate-50/50 p-2 rounded w-full">
-                            <span className="font-semibold not-italic text-blue-800 mr-1">Análisis:</span>
-                            {s.reasoning}
-                          </p>
-                        )}
-
-                        <div className="flex justify-between w-full text-[10px] font-bold text-blue-700/70 pt-1">
-                          <span>Est: {s.suggestedStatisticalFee}%</span>
-                          <span>IVA: {s.suggestedVatRate}%</span>
-                        </div>
+                        {s.reasoning && <p className="text-[10px] text-slate-500 italic leading-tight">{s.reasoning}</p>}
                       </Badge>
                     ))}
                   </div>
                 </div>
               )}
 
-             <div className="grid grid-cols-2 gap-4 pt-2">
-  <FormField
-    control={form.control}
-    name="tariffRate"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>DIE (%)</FormLabel>
-        <FormControl>
-          <Input type="number" step="0.1" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-  <FormField
-    control={form.control}
-    name="statisticalFee"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>Estadística (%)</FormLabel>
-        <FormControl>
-          <Input type="number" step="0.1" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-  <FormField
-    control={form.control}
-    name="vatRate"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>IVA (%)</FormLabel>
-        <FormControl>
-          <Input type="number" step="0.1" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-  <FormField
-    control={form.control}
-    name="hsCode"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>Posición NCM</FormLabel>
-        <FormControl>
-          <Input placeholder="NCM" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-</div>
+              {/* Validación VUCE */}
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fuente Oficial</span>
+                <a href="https://vuce.gob.ar/vuce-consultas-arancelarias/" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+                  CONSULTAR VUCE EXTRAZONA <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="tariffRate" render={({ field }) => (
+                  <FormItem><FormLabel className="text-xs">DIE Extrazona (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="statisticalFee" render={({ field }) => (
+                  <FormItem><FormLabel className="text-xs">Estadística (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="vatRate" render={({ field }) => (
+                  <FormItem><FormLabel className="text-xs">IVA (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="hsCode" render={({ field }) => (
+                  <FormItem><FormLabel className="text-xs">Posición NCM</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                )} />
+              </div>
             </CardContent>
           </Card>
 
