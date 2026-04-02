@@ -1,3 +1,4 @@
+import "./globals.css"; // <-- ESTO ES LO QUE "ENCIENDE" EL DISEÑO
 export const metadata = {
   title: 'ImportFlow',
   description: 'Calculadora de Importaciones',
