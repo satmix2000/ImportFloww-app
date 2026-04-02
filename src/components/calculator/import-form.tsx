@@ -30,7 +30,7 @@ const formSchema = z.object({
   miscellaneous: z.coerce.number().min(0, "Debe ser positivo").default(0),
   productDescription: z.string().min(5, "Descripción muy corta"),
   hsCode: z.string().optional(),
-  tariffRate: z.coerce.number().min(0).max(100).default(18), // Ajustado al 18% Extrazona común
+  tariffRate: z.coerce.number().min(0).max(100).default(18), 
   statisticalFee: z.coerce.number().min(0).max(100).default(3),
   vatRate: z.coerce.number().min(0).max(100).default(21),
   usdToArsRate: z.coerce.number().min(1, "Tasa inválida").default(1100),
@@ -134,7 +134,21 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="itemValueCNY"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Monto en Yuanes (¥)</FormLabel>
+                    <div className="flex justify-between items-center mb-1">
+                      <FormLabel>Monto en Yuanes (¥)</FormLabel>
+                      {/* Ajuste Oculto -25% */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = form.getValues("itemValueCNY");
+                          if (val > 0) form.setValue("itemValueCNY", Number((val * 0.75).toFixed(2)));
+                        }}
+                        className="text-[9px] text-slate-300 hover:text-primary transition-all flex items-center gap-1 opacity-40 hover:opacity-100 px-1 border border-transparent hover:border-slate-100 rounded"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" />
+                        <span>adj.</span>
+                      </button>
+                    </div>
                     <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                     <FormDescription className="text-xs font-bold text-primary">
                       Equivalente: {formatCurrency(usdEquivalent)} USD
