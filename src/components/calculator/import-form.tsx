@@ -14,14 +14,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { suggestHsCode, type HsCodeSuggestionOutput } from "@/ai/flows/hs-code-suggestion";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/calculator-utils";
+} from "../components/ui/form";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Separator } from ../components/ui/separator";
+import { suggestHsCode, type HsCodeSuggestionOutput } from "../ai/flows/hs-code-suggestion";
+import { Badge } from "../components/ui/badge";
+import { formatCurrency } from "../lib/calculator-utils";
 
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
