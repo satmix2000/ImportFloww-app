@@ -304,34 +304,60 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <FormField
-                  control={form.control}
-                  name="tariffRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>DIE (%)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="vatRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>IVA (%)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+             <div className="grid grid-cols-2 gap-4 pt-2">
+  <FormField
+    control={form.control}
+    name="tariffRate"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>DIE (%)</FormLabel>
+        <FormControl>
+          <Input type="number" step="0.1" {...field} />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+  <FormField
+    control={form.control}
+    name="statisticalFee"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Estadística (%)</FormLabel>
+        <FormControl>
+          <Input type="number" step="0.1" {...field} />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+  <FormField
+    control={form.control}
+    name="vatRate"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>IVA (%)</FormLabel>
+        <FormControl>
+          <Input type="number" step="0.1" {...field} />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+  <FormField
+    control={form.control}
+    name="hsCode"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Posición NCM</FormLabel>
+        <FormControl>
+          <Input placeholder="NCM" {...field} />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+</div>
             </CardContent>
           </Card>
 
