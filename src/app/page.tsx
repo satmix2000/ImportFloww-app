@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ImportForm, type ImportFormData } from "../components/calculator/import-form";
-import { ResultsDisplay } from "../components/calculator/results-display";
-import { calculateImportBreakdown, type ImportBreakdown } from "../lib/calculator-utils";
+import { ImportForm, type ImportFormData } from "@/components/calculator/import-form";
+import { ResultsDisplay } from "@/components/calculator/results-display";
+import { calculateImportBreakdown, type ImportBreakdown } from "@/lib/calculator-utils";
 import { Globe, Plane, ShieldCheck, TrendingUp } from "lucide-react";
 
 export default function Home() {
