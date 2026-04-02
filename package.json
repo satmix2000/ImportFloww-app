@@ -48,7 +48,10 @@
     "dotenv": "^16.4.5",
     "genkit": "latest",
     "@genkit-ai/google-genai": "latest",
-    "@genkit-ai/ai": "latest"
+    "@genkit-ai/ai": "latest",
+    "@opentelemetry/exporter-jaeger": "latest",
+    "@opentelemetry/exporter-zipkin": "latest",
+    "@opentelemetry/sdk-node": "latest"
   },
   "devDependencies": {
     "typescript": "^5",
