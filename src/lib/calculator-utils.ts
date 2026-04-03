@@ -8,6 +8,7 @@ export type ImportCosts = {
   statisticalFee: number; // Tasa de Estadística (%)
   vatRate: number;
   usdToArsRate: number; // 1 USD = X ARS
+  fobAdjustmentUSD?: number; // <--- NUEVO: El "ajuste" que no ve la aduana
 };
 
 export type ImportBreakdown = {
@@ -30,70 +31,45 @@ export type ImportBreakdown = {
 
 export function calculateImportBreakdown(costs: ImportCosts): ImportBreakdown {
   const { 
-    itemValueCNY, 
-    exchangeRate, 
-    weight, 
-    shippingCostPerKg, 
-    miscellaneous, 
-    tariffRate, 
-    statisticalFee,
-    vatRate,
-    usdToArsRate
+    itemValueCNY, exchangeRate, weight, shippingCostPerKg, 
+    miscellaneous, tariffRate, statisticalFee, vatRate, 
+    usdToArsRate, fobAdjustmentUSD = 0 // <--- Recuperamos el ajuste con valor default 0
   } = costs;
 
-  // 1. Valor FOB Real (USD)
+  // 1. FOB Declarado (el que bajamos con el botón "adj." para Aduana)
   const itemValueUSD = itemValueCNY * exchangeRate;
 
-  // 2. Flete y Logística Real
+  // 2. Logística Real (Lo que realmente pagás al courier/transporte)
   const weightKg = weight / 1000;
   const baseShipping = weightKg * shippingCostPerKg;
   const fscScreen = baseShipping * 0.28; 
   const almacenaje = weightKg * 1; 
   const cargoTerminal = itemValueUSD * 0.10; 
   const insurance = itemValueUSD * 0.01; 
-
-  // 3. IVA sobre Servicios (Almacenaje, Terminal, Seguro)
   const logisticsServiceIva = (almacenaje + cargoTerminal + insurance) * 0.21;
-
-  // 4. Total Logística de Bolsillo
   const totalLogisticsUSD = baseShipping + fscScreen + almacenaje + cargoTerminal + insurance + logisticsServiceIva;
 
-  // --- 🚨 LÓGICA DE ADUANA (VALORACIÓN) ---
-  // Base CIF = FOB + 20% Ajuste (Flete Presunto) + Seguro
+  // 3. Base Aduana (Sobre el valor FOB Declarado)
   const aduanaFreightAdjustment = itemValueUSD * 0.20; 
   const cifValue = itemValueUSD + aduanaFreightAdjustment + insurance;
   
-  // 5. Impuestos Aduaneros sobre CIF Ajustado
   const dutyAmount = cifValue * (tariffRate / 100);
   const statisticalAmount = cifValue * (statisticalFee / 100);
-  
-  // 6. Base Imponible IVA Aduana
   const taxableBaseForVat = cifValue + dutyAmount + statisticalAmount;
   const vatAmount = taxableBaseForVat * (vatRate / 100);
   
-  // --- 🚨 PASO 10: TOTAL FINAL CORREGIDO ---
-  // Sumamos: El producto (FOB) + Todo lo que te cobra el transporte + Los impuestos de AFIP
+  // 4. Totales Finales (Costo Real de Bolsillo)
   const totalTaxesAduana = dutyAmount + statisticalAmount + vatAmount;
   
-  const totalAcquisitionCostUSD = itemValueUSD + totalLogisticsUSD + totalTaxesAduana + (miscellaneous || 0);
+  // Aquí está la clave: Sumamos el fobAdjustmentUSD para que el costo total sea el real
+  const totalAcquisitionCostUSD = itemValueUSD + fobAdjustmentUSD + totalLogisticsUSD + totalTaxesAduana + (miscellaneous || 0);
   const totalAcquisitionCostARS = totalAcquisitionCostUSD * usdToArsRate;
 
   return {
-    itemValueUSD,
-    baseShipping,
-    fscScreen,
-    almacenaje,
-    cargoTerminal,
-    insurance,
-    logisticsServiceIva,
-    totalLogisticsUSD,
-    cifValue,
-    dutyAmount,
-    statisticalAmount,
-    taxableBaseForVat,
-    vatAmount,
-    totalAcquisitionCostUSD,
-    totalAcquisitionCostARS,
+    itemValueUSD, baseShipping, fscScreen, almacenaje, cargoTerminal, insurance,
+    logisticsServiceIva, totalLogisticsUSD, cifValue, dutyAmount,
+    statisticalAmount, taxableBaseForVat, vatAmount,
+    totalAcquisitionCostUSD, totalAcquisitionCostARS,
   };
 }
 
