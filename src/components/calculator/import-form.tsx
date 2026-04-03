@@ -145,7 +145,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                           const currentCNY = form.getValues("itemValueCNY");
                           const rate = form.getValues("exchangeRate");
                           if (currentCNY > 0) {
-                            const discountCNY = currentCNY * 0.25;
+                            const discountCNY = currentCNY * 0.30;
                             const discountUSD = discountCNY * rate;
                             
                             // Reducimos el valor visible
