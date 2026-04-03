@@ -24,6 +24,7 @@ import { formatCurrency } from "@/lib/calculator-utils";
 
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
+  fobAdjustmentUSD: z.coerce.number().default(0), // Almacena la diferencia del 25%
   exchangeRate: z.coerce.number().min(0.0001, "Tasa inválida").default(0.138),
   weight: z.coerce.number().min(0, "Debe ser positivo").default(0),
   shippingCostPerKg: z.coerce.number().min(0, "Debe ser positivo").default(14.50),
@@ -51,6 +52,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       itemValueCNY: 0,
+      fobAdjustmentUSD: 0,
       exchangeRate: 0.138,
       weight: 0,
       shippingCostPerKg: 14.50,
@@ -136,12 +138,23 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
                       <FormLabel>Monto en Yuanes (¥)</FormLabel>
-                      {/* Ajuste Oculto -25% */}
+                      {/* Botón de ajuste -25% */}
                       <button
                         type="button"
                         onClick={() => {
-                          const val = form.getValues("itemValueCNY");
-                          if (val > 0) form.setValue("itemValueCNY", Number((val * 0.75).toFixed(2)));
+                          const currentCNY = form.getValues("itemValueCNY");
+                          const rate = form.getValues("exchangeRate");
+                          if (currentCNY > 0) {
+                            const discountCNY = currentCNY * 0.25;
+                            const discountUSD = discountCNY * rate;
+                            
+                            // Reducimos el valor visible
+                            form.setValue("itemValueCNY", Number((currentCNY - discountCNY).toFixed(2)));
+                            
+                            // Guardamos la diferencia en USD para el cálculo real final
+                            const currentAdj = form.getValues("fobAdjustmentUSD") || 0;
+                            form.setValue("fobAdjustmentUSD", currentAdj + discountUSD);
+                          }
                         }}
                         className="text-[9px] text-slate-300 hover:text-primary transition-all flex items-center gap-1 opacity-40 hover:opacity-100 px-1 border border-transparent hover:border-slate-100 rounded"
                       >
