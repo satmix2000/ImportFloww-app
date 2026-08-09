@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink } from "lucide-react";
+import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink, Database, Search } from "lucide-react";
 
 import {
   Form,
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { suggestHsCode, type HsCodeSuggestionOutput } from "@/ai/flows/hs-code-suggestion";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculator-utils";
+import { saveNcmEntry, initializeDatabaseWithSeed, searchNcm, type NcmEntry } from "@/lib/ncm-database";
 
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
@@ -47,6 +48,9 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isRatesLoading, setIsRatesLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<HsCodeSuggestionOutput>([]);
+  const [showLocalDb, setShowLocalDb] = useState(false);
+  const [localDbQuery, setLocalDbQuery] = useState("");
+  const [localDbResults, setLocalDbResults] = useState<NcmEntry[]>([]);
 
   const form = useForm<ImportFormData>({
     resolver: zodResolver(formSchema),
@@ -86,7 +90,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     }
   };
 
-  useEffect(() => { fetchRates(); }, []);
+  useEffect(() => { fetchRates(); initializeDatabaseWithSeed(); }, []);
 
   const watchCNY = form.watch("itemValueCNY");
   const watchRate = form.watch("exchangeRate");
@@ -106,11 +110,47 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     }
   };
 
+  // Buscar en base local
+  const handleLocalDbSearch = (q: string) => {
+    setLocalDbQuery(q);
+    if (q.trim().length < 2) {
+      setLocalDbResults([]);
+      return;
+    }
+    const results = searchNcm(q);
+    setLocalDbResults(results.slice(0, 8).map(r => r.entry));
+  };
+
+  // Seleccionar de base local
+  const selectFromLocalDb = (entry: NcmEntry) => {
+    form.setValue("hsCode", entry.hsCode);
+    form.setValue("tariffRate", entry.suggestedTariffRate);
+    form.setValue("statisticalFee", entry.suggestedStatisticalFee);
+    form.setValue("vatRate", entry.suggestedVatRate);
+    form.setValue("productDescription", entry.description);
+    setShowLocalDb(false);
+    setLocalDbQuery("");
+    setLocalDbResults([]);
+  };
+
   const selectSuggestion = (s: any) => {
     form.setValue("hsCode", s.hsCode);
     if (s.suggestedTariffRate !== undefined) form.setValue("tariffRate", s.suggestedTariffRate);
     if (s.suggestedStatisticalFee !== undefined) form.setValue("statisticalFee", s.suggestedStatisticalFee);
     if (s.suggestedVatRate !== undefined) form.setValue("vatRate", s.suggestedVatRate);
+
+    // Auto-guardar en la base de datos NCM local
+    saveNcmEntry({
+      hsCode: s.hsCode,
+      description: form.getValues("productDescription"),
+      tariffCategory: s.tariffCategory || "",
+      reasoning: s.reasoning || "",
+      suggestedTariffRate: s.suggestedTariffRate ?? form.getValues("tariffRate"),
+      suggestedStatisticalFee: s.suggestedStatisticalFee ?? form.getValues("statisticalFee"),
+      suggestedVatRate: s.suggestedVatRate ?? form.getValues("vatRate"),
+      origin: "ai",
+      tags: [],
+    });
   };
 
   return (
@@ -234,16 +274,69 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
                       <FormLabel>Descripción del Producto</FormLabel>
-                      <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold" onClick={handleAiAssist} disabled={isAiLoading}>
-                        <Sparkles className="w-3 h-3" />
-                        {isAiLoading ? "Consultando..." : "ASISTENTE IA"}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-primary text-primary font-bold" onClick={() => setShowLocalDb(!showLocalDb)}>
+                          <Database className="w-3 h-3" />
+                          BASE LOCAL
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold" onClick={handleAiAssist} disabled={isAiLoading}>
+                          <Sparkles className="w-3 h-3" />
+                          {isAiLoading ? "Consultando..." : "ASISTENTE IA"}
+                        </Button>
+                      </div>
                     </div>
                     <FormControl><Input placeholder="Ej. Sensor de proximidad..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Búsqueda en base local */}
+              {showLocalDb && (
+                <div className="bg-green-50/50 p-3 rounded-lg border border-green-100 space-y-3">
+                  <p className="text-[10px] font-bold text-green-800 uppercase flex items-center gap-1">
+                    <Database className="w-3 h-3" />
+                    Buscar en base local
+                  </p>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por código o descripción..."
+                      value={localDbQuery}
+                      onChange={(e) => handleLocalDbSearch(e.target.value)}
+                      className="pl-7 h-8 text-xs"
+                      autoFocus
+                    />
+                  </div>
+                  {localDbResults.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {localDbResults.map((entry) => (
+                        <Badge
+                          key={entry.hsCode}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-green-100 p-2 text-left flex flex-col items-start w-full bg-white border-green-200"
+                          onClick={() => selectFromLocalDb(entry)}
+                        >
+                          <div className="flex justify-between w-full">
+                            <span className="font-bold text-xs text-slate-800">{entry.hsCode}</span>
+                            <span className="text-[10px] text-primary font-bold">DIE: {entry.suggestedTariffRate}%</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 truncate w-full">{entry.description}</p>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {localDbQuery.length >= 2 && localDbResults.length === 0 && (
+                    <p className="text-[10px] text-muted-foreground text-center py-2">
+                      Sin resultados. Usa el Asistente IA para generar nuevos códigos.
+                    </p>
+                  )}
+                  <a href="/ncm" target="_blank" className="text-[10px] text-green-700 hover:underline flex items-center gap-1">
+                    <ExternalLink className="w-2.5 h-2.5" />
+                    Ver catálogo completo
+                  </a>
+                </div>
+              )}
 
               {/* Sugerencias de IA */}
               {aiSuggestions.length > 0 && (
