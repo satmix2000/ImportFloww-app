@@ -1,8 +1,65 @@
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "/**\n * NCM Local Database Service\n * Base de datos local de códigos NCM que crece con cada consulta IA.\n * Se almacena en localStorage del navegador.\n */\n\nexport interface NcmEntry {\n  hsCode: string;                    // Código NCM 8 dígitos\n  description: string;               // Descripción del producto\n  tariffCategory: string;            // Categoría arancelaria\n  reasoning: string;                 // Justificación técnica\n  suggestedTariffRate: number;       // DIE Extrazona (%)\n  suggestedStatisticalFee: number;   // Tasa Estadística (%)\n  suggestedVatRate: number;          // IVA (%)\n  origin: 'ai' | 'manual' | 'seed'; // Cómo se agregó\n  lastUsed: string;                  // ISO timestamp\n  useCount: number;                  // Veces que se usó\n  tags: string[];                    // Tags para búsqueda\n  notes?: string;                    // Notas del usuario\n}\n\nexport interface NcmSearchResult {\n  entry: NcmEntry;\n  score: number; // Relevancia de búsqueda\n}\n\nconst STORAGE_KEY = 'import…base';\nconst DB_VERSION = 1;\n\ninterface NcmDatabase {\n  version: number;\n  entries: Record<string, NcmEntry>; // keyed by hsCode\n  lastUpdated: string;\n  totalQueries: number;\n}\n\n// ─── Storage helpers ───\n\nfunction getDatabase(): NcmDatabase {\n  if (typeof window === 'undefined') {\n    return { version: DB_VERSION, entries: {}, lastUpdated: new Date().toISOString(), totalQueries: 0 };\n  }\n  try {\n    const raw = localStorage.getItem(STORAGE_KEY);\n    if (raw) {\n      const db = JSON.parse(raw) as NcmDatabase;\n      if (db.version === DB_VERSION) return db;\n    }\n  } catch (e) {\n    console.warn('[NCM DB] Error reading database:', e);\n  }\n  return { version: DB_VERSION, entries: {}, lastUpdated: new Date().toISOString(), totalQueries: 0 };\n}\n\nfunction saveDatabase(db: NcmDatabase): void {\n  if (typeof window === 'undefined') return;\n  try {\n    db.lastUpdated = new Date().toISOString();\n    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));\n  } catch (e) {\n    console.warn('[NCM DB] Error saving database:', e);\n  }\n}\n\n// ─── CRUD Operations ───\n\n/**\n * Agrega o actualiza una entrada NCM en la base local.\n * Si ya existe, incrementa el contador de uso y actualiza los datos.\n */\nexport function saveNcmEntry(entry: Omit<NcmEntry, 'lastUsed' | 'useCount'>): NcmEntry {\n  const db = getDatabase();\n  const existing = db.entries[entry.hsCode];\n\n  const saved: NcmEntry = {\n    ...entry,\n    lastUsed: new Date().toISOString(),\n    useCount: existing ? existing.useCount + 1 : 1,\n    tags: entry.tags.length > 0 ? entry.tags : generateTags(entry.description),\n  };\n\n  db.entries[entry.hsCode] = saved;\n  db.totalQueries += 1;\n  saveDatabase(db);\n  return saved;\n}\n\n/**\n * Busca entradas por texto libre (descripción, código, tags).\n * Retorna resultados ordenados por relevancia.\n */\nexport function searchNcm(query: string): NcmSearchResult[] {\n  const db = getDatabase();\n  const q = query.toLowerCase().trim();\n  if (!q) return getAllEntries().map(e => ({ entry: e, score: 0 }));\n\n  const results: NcmSearchResult[] = [];\n\n  for (const entry of Object.values(db.entries)) {\n    let score = 0;\n\n    // Coincidencia exacta de código → máxima prioridad\n    if (entry.hsCode === q || entry.hsCode.replace(/\\./g, '') === q.replace(/\\./g, '')) {\n      score = 100;\n    }\n    // Código empieza con la query\n    else if (entry.hsCode.startsWith(q)) {\n      score = 80;\n    }\n    // Código contiene la query\n    else if (entry.hsCode.includes(q)) {\n      score = 60;\n    }\n\n    // Coincidencia en descripción\n    const desc = entry.description.toLowerCase();\n    if (desc.includes(q)) {\n      score += 40;\n      // Palabra completa en descripción\n      if (desc.split(/\\s+/).some(w => w.startsWith(q))) {\n        score += 15;\n      }\n    }\n\n    // Coincidencia en tags\n    if (entry.tags.some(t => t.toLowerCase().includes(q))) {\n      score += 25;\n    }\n\n    // Coincidencia en categoría\n    if (entry.tariffCategory.toLowerCase().includes(q)) {\n      score += 20;\n    }\n\n    // Bonus por uso frecuente\n    score += Math.min(entry.useCount * 2, 10);\n\n    if (score > 0) {\n      results.push({ entry, score });\n    }\n  }\n\n  return results.sort((a, b) => b.score - a.score);\n}\n\n/**\n * Obtiene una entrada por código NCM.\n */\nexport function getNcmByCode(hsCode: string): NcmEntry | null {\n  const db = getDatabase();\n  return db.entries[hsCode] || null;\n}\n\n/**\n * Obtiene todas las entradas ordenadas por último uso.\n */\nexport function getAllEntries(): NcmEntry[] {\n  const db = getDatabase();\n  return Object.values(db.entries).sort(\n    (a, b) => new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime()\n  );\n}\n\n/**\n * Obtiene las entradas más usadas.\n */\nexport function getTopEntries(limit: number = 10): NcmEntry[] {\n  const db = getDatabase();\n  return Object.values(db.entries)\n    .sort((a, b) => b.useCount - a.useCount)\n    .slice(0, limit);\n}\n\n/**\n * Elimina una entrada por código NCM.\n */\nexport function deleteNcmEntry(hsCode: string): boolean {\n  const db = getDatabase();\n  if (db.entries[hsCode]) {\n    delete db.entries[hsCode];\n    saveDatabase(db);\n    return true;\n  }\n  return false;\n}\n\n/**\n * Actualiza notas del usuario para una entrada.\n */\nexport function updateNcmNotes(hsCode: string, notes: string): boolean {\n  const db = getDatabase();\n  if (db.entries[hsCode]) {\n    db.entries[hsCode].notes = notes;\n    saveDatabase(db);\n    return true;\n  }\n  return false;\n}\n\n/**\n * Obtiene estadísticas de la base de datos.\n */\nexport function getNcmStats(): {\n  totalEntries: number;\n  totalQueries: number;\n  lastUpdated: string;\n  topCategories: { category: string; count: number }[];\n} {\n  const db = getDatabase();\n  const entries = Object.values(db.entries);\n\n  // Contar categorías\n  const catCounts: Record<string, number> = {};\n  for (const e of entries) {\n    const cat = e.tariffCategory || 'Sin categoría';\n    catCounts[cat] = (catCounts[cat] || 0) + 1;\n  }\n\n  const topCategories = Object.entries(catCounts)\n    .map(([category, count]) => ({ category, count }))\n    .sort((a, b) => b.count - a.count)\n    .slice(0, 10);\n\n  return {\n    totalEntries: entries.length,\n    totalQueries: db.totalQueries,\n    lastUpdated: db.lastUpdated,\n    topCategories,\n  };\n}\n\n/**\n * Exporta toda la base como JSON (para backup).\n */\nexport function exportDatabase(): string {\n  const db = getDatabase();\n  return JSON.stringify(db, null, 2);\n}\n\n/**\n * Importa un JSON de backup.\n */\nexport function importDatabase(json: string): { success: boolean; imported: number } {\n  try {\n    const db = JSON.parse(json) as NcmDatabase;\n    if (db.version !== DB_VERSION) {\n      return { success: false, imported: 0 };\n    }\n    saveDatabase(db);\n    return { success: true, imported: Object.keys(db.entries).length };\n  } catch {\n    return { success: false, imported: 0 };\n  }\n}\n\n// ─── Utilities ───\n\nfunction generateTags(description: string): string[] {\n  const words = description\n    .toLowerCase()\n    .replace(/[^\\w\\sáéíóúñü]/g, '')\n    .split(/\\s+/)\n    .filter(w => w.length > 3)\n    .filter(w => !['para', 'como', 'esta', 'tiene', 'puede', 'donde', 'sobre'].includes(w));\n  return [...new Set(words)].slice(0, 8);\n}\n\n/**\n * Carga el seed data inicial si la base está vacía.\n */\nexport function initializeDatabaseWithSeed(): number {\n  const db = getDatabase();\n  if (Object.keys(db.entries).length > 0) return 0; // Ya tiene datos\n\n  const seedEntries = getSeedData();\n  for (const entry of seedEntries) {\n    db.entries[entry.hsCode] = {\n      ...entry,\n      lastUsed: new Date().toISOString(),\n      useCount: 0,\n      origin: 'seed',\n    };\n  }\n  saveDatabase(db);\n  return seedEntries.length;\n}\n\n// ─── Seed Data: Códigos NCM comunes para importación Argentina ───\n\nfunction getSeedData(): Omit<NcmEntry, 'lastUsed' | 'useCount' | 'origin'>[] {\n  return [\n    // Electrónica\n    {\n      hsCode: '8471.30.00',\n      description: 'Laptops y computadoras portátiles',\n      tariffCategory: 'Máquinas automáticas para procesamiento de datos',\n   \n…(truncated)…"
-    }
-  ]
+/**
+ * NCM Local Database Service
+ * Base de datos local de códigos NCM que crece con cada consulta IA.
+ * Se almacena en localStorage del navegador.
+ */
+
+export interface NcmEntry {
+  hsCode: string;                    // Código NCM 8 dígitos
+  description: string;               // Descripción del producto
+  tariffCategory: string;            // Categoría arancelaria
+  reasoning: string;                 // Justificación técnica
+  suggestedTariffRate: number;       // DIE Extrazona (%)
+  suggestedStatisticalFee: number;   // Tasa Estadística (%)
+  suggestedVatRate: number;          // IVA (%)
+  origin: 'ai' | 'manual' | 'seed'; // Cómo se agregó
+  lastUsed: string;                  // ISO timestamp
+  useCount: number;                  // Veces que se usó
+  tags: string[];                    // Tags para búsqueda
+  notes?: string;                    // Notas del usuario
 }
+
+export interface NcmSearchResult {
+  entry: NcmEntry;
+  score: number; // Relevancia de búsqueda
+}
+
+const STORAGE_KEY = 'importflow_ncm_database';
+const DB_VERSION = 1;
+
+interface NcmDatabase {
+  version: number;
+  entries: Record<string, NcmEntry>; // keyed by hsCode
+  lastUpdated: string;
+  totalQueries: number;
+}
+
+// ─── Storage helpers ───
+
+function getDatabase(): NcmDatabase {
+  if (typeof window === 'undefined') {
+    return { version: DB_VERSION, entries: {}, lastUpdated: new Date().toISOString(), totalQueries: 0 };
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const db = JSON.parse(raw) as NcmDatabase;
+      if (db.version === DB_VERSION) return db;
+    }
+  } catch (e) {
+    console.warn('[NCM DB] Error reading database:', e);
+  }
+  return { version: DB_VERSION, entries: {}, lastUpdated: new Date().toISOString(), totalQueries: 0 };
+}
+
+function saveDatabase(db: NcmDatabase): void {
+  if (typeof window === 'undefined') return;
+  try {
+    db.lastUpdated = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch (e) {
+    console.warn('[NCM DB] Error saving database:', e);
+  }
+}
+
+// ─── CRUD Operations ───
