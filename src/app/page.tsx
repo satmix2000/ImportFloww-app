@@ -13,7 +13,7 @@ export default function Home() {
     breakdown: ImportBreakdown;
   } | null>(null);
 
-  const handleCalculate = (data: ImportFormData) => {
+  const handleCalculate = (data: ImportFormData & { metricasML?: any }) => {
     const breakdown = calculateImportBreakdown(data);
     setCalculation({ formData: data, breakdown });
     
