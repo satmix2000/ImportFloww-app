@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink, Database, Search } from "lucide-react";
+import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink, ShoppingBag, Database, Search } from "lucide-react";
 
 import {
   Form,
@@ -25,7 +25,7 @@ import { saveNcmEntry, initializeDatabaseWithSeed, searchNcm, type NcmEntry } fr
 
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
-  fobAdjustmentUSD: z.coerce.number().default(0), // Almacena la diferencia del 25%
+  fobAdjustmentUSD: z.coerce.number().default(0),
   exchangeRate: z.coerce.number().min(0.0001, "Tasa inválida").default(0.138),
   weight: z.coerce.number().min(0, "Debe ser positivo").default(0),
   shippingCostPerKg: z.coerce.number().min(0, "Debe ser positivo").default(14.50),
@@ -36,12 +36,15 @@ const formSchema = z.object({
   statisticalFee: z.coerce.number().min(0).max(100).default(3),
   vatRate: z.coerce.number().min(0).max(100).default(21),
   usdToArsRate: z.coerce.number().min(1, "Tasa inválida").default(1100),
+  // Campos MercadoLibre
+  precioCompetenciaML: z.coerce.number().min(0, "Debe ser positivo").default(0),
+  comisionMLPorcentaje: z.coerce.number().min(0).max(100).default(16),
 });
 
 export type ImportFormData = z.infer<typeof formSchema>;
 
 interface ImportFormProps {
-  onCalculate: (data: ImportFormData) => void;
+  onCalculate: (data: ImportFormData & { metricasML?: any }) => void;
 }
 
 export function ImportForm({ onCalculate }: ImportFormProps) {
@@ -67,6 +70,8 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       statisticalFee: 3,
       vatRate: 21,
       usdToArsRate: 1100,
+      precioCompetenciaML: 0,
+      comisionMLPorcentaje: 16,
     },
   });
 
@@ -95,6 +100,35 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
   const watchCNY = form.watch("itemValueCNY");
   const watchRate = form.watch("exchangeRate");
   const usdEquivalent = (watchCNY || 0) * (watchRate || 0);
+
+  // Cálculo interno de métricas ML
+  const calcularMetricasMLInterno = (precioCompetencia: number, comisionPorcentaje: number) => {
+    if (!precioCompetencia || precioCompetencia <= 0) return null;
+    
+    let costoFijo = 0;
+    let envioGratis = 0;
+    const comisionMLDecimal = comisionPorcentaje / 100;
+
+    if (precioCompetencia < 33000) {
+      if (precioCompetencia <= 15999) costoFijo = 1230;
+      else if (precioCompetencia <= 23999) costoFijo = 2455;
+      else costoFijo = 2925;
+    } else {
+      envioGratis = 4500;
+    }
+
+    return {
+      costoFijoML: costoFijo,
+      envioGratisML: envioGratis,
+      comisionPesos: Number((precioCompetencia * comisionMLDecimal).toFixed(2))
+    };
+  };
+
+  // Submit con métricas ML
+  const handleFormSubmit = (data: ImportFormData) => {
+    const metricasML = calcularMetricasMLInterno(data.precioCompetenciaML, data.comisionMLPorcentaje);
+    onCalculate({ ...data, metricasML });
+  };
 
   const handleAiAssist = async () => {
     const description = form.getValues("productDescription");
@@ -156,7 +190,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
   return (
     <div className="grid gap-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onCalculate)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Card FOB */}
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-primary text-primary-foreground pb-6">
@@ -178,7 +212,6 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
                       <FormLabel>Monto en Yuanes (¥)</FormLabel>
-                      {/* Botón de ajuste -25% */}
                       <button
                         type="button"
                         onClick={() => {
@@ -187,11 +220,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                           if (currentCNY > 0) {
                             const discountCNY = currentCNY * 0.30;
                             const discountUSD = discountCNY * rate;
-                            
-                            // Reducimos el valor visible
                             form.setValue("itemValueCNY", Number((currentCNY - discountCNY).toFixed(2)));
-                            
-                            // Guardamos la diferencia en USD para el cálculo real final
                             const currentAdj = form.getValues("fobAdjustmentUSD") || 0;
                             form.setValue("fobAdjustmentUSD", currentAdj + discountUSD);
                           }
@@ -215,7 +244,18 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="exchangeRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tasa CNY/USD</FormLabel>
+                    <div className="flex justify-between items-center mb-1">
+                      <FormLabel>Tasa CNY/USD</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="usdToArsRate"
+                        render={({ field: arsField }) => (
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                            Blue: ${arsField.value}
+                          </span>
+                        )}
+                      />
+                    </div>
                     <FormControl><Input type="number" step="0.0001" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -378,6 +418,50 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem><FormLabel className="text-xs">Posición NCM</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
                 )} />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Card MercadoLibre */}
+          <Card className="border-dashed border-2 border-orange-200 shadow-sm overflow-hidden bg-orange-50/20 backdrop-blur-sm">
+            <CardHeader className="bg-orange-500 text-white pb-4">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                <div>
+                  <CardTitle className="font-headline text-base tracking-tight">Simulador de Salida: Mercado Libre FULL</CardTitle>
+                  <CardDescription className="text-orange-100 text-[11px]">Calibrado para componentes livianos (&lt;100g)</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="precioCompetenciaML"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium text-xs">Precio de la Competencia (ARS $)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="Ej. 5818 (Opcional)" className="border-orange-200 focus:border-orange-500 bg-white" {...field} />
+                    </FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      Dejalo en 0 si solo querés ver el costo de importación.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="comisionMLPorcentaje"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium text-xs">Comisión de la Categoría (%)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="1" className="border-orange-200 focus:border-orange-500 bg-white" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
