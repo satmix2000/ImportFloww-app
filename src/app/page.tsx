@@ -38,11 +38,10 @@ export default function Home() {
               ImportFlow
             </h1>
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">Calculadora</a>
-            <a href="#" className="hover:text-primary transition-colors">Códigos HS</a>
-            <a href="#" className="hover:text-primary transition-colors">Ayuda</a>
-          </nav>
+         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+  <span className="text-primary font-bold">Calculadora</span>
+  <a href="/ncm" className="hover:text-primary transition-colors">Códigos NCM</a>
+</nav>
         </div>
       </header>
 
