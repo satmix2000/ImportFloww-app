@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ImportForm, type ImportFormData } from "@/components/calculator/import-form";
 import { ResultsDisplay } from "@/components/calculator/results-display";
 import { calculateImportBreakdown, type ImportBreakdown } from "@/lib/calculator-utils";
-import { Globe, TrendingUp, Ship, Plane, Package, ArrowRight, Anchor, Container, BarChart3, Shield, Zap } from "lucide-react";
+import { Globe, TrendingUp, Ship, Plane, Package, BarChart3, Shield, Zap } from "lucide-react";
 
 function RateTicker() {
   const [rates, setRates] = useState<{ usd: number; cny: number }>({ usd: 1100, cny: 0 });
