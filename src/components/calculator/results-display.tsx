@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BarChart3, ReceiptText, ShieldCheck, Truck, Landmark, Info, ShoppingBag, ArrowUpRight, AlertTriangle, Search } from "lucide-react";
+import { BarChart3, ReceiptText, ShieldCheck, Truck, Landmark, Info, ShoppingBag, ArrowUpRight, AlertTriangle, Search, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatYuan, formatARS, type ImportBreakdown } from "@/lib/calculator-utils";
 import { ImportFormData } from "./import-form";
+import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface ResultsDisplayProps {
   formData: ImportFormData & { metricasML?: any };
@@ -216,6 +217,75 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
             </section>
 
             <Separator className="bg-primary/10 h-[2px]" />
+
+            {/* Gráfico de desglose de costos */}
+            <section className="pt-2">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <PieChart className="w-4 h-4" /> Desglose Visual de Costos
+              </h3>
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-32 h-32 shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie
+                          data={[
+                            { name: "FOB", value: Number(breakdown.itemValueUSD.toFixed(2)), color: "#3b82f6" },
+                            { name: "Logística", value: Number(breakdown.totalLogisticsUSD.toFixed(2)), color: "#f59e0b" },
+                            { name: "DIE", value: Number(breakdown.dutyAmount.toFixed(2)), color: "#ef4444" },
+                            { name: "Estadística", value: Number(breakdown.statisticalAmount.toFixed(2)), color: "#8b5cf6" },
+                            { name: "IVA", value: Number(breakdown.vatAmount.toFixed(2)), color: "#10b981" },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={28}
+                          outerRadius={55}
+                          paddingAngle={2}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {[
+                            { color: "#3b82f6" },
+                            { color: "#f59e0b" },
+                            { color: "#ef4444" },
+                            { color: "#8b5cf6" },
+                            { color: "#10b981" },
+                          ].map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value)}
+                          contentStyle={{
+                            fontSize: "11px",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                          }}
+                        />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    {[
+                      { name: "FOB", value: breakdown.itemValueUSD, color: "bg-blue-500" },
+                      { name: "Logística", value: breakdown.totalLogisticsUSD, color: "bg-amber-500" },
+                      { name: "DIE", value: breakdown.dutyAmount, color: "bg-red-500" },
+                      { name: "Estadística", value: breakdown.statisticalAmount, color: "bg-violet-500" },
+                      { name: "IVA Aduana", value: breakdown.vatAmount, color: "bg-emerald-500" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${item.color}`} />
+                          <span className="text-muted-foreground">{item.name}</span>
+                        </div>
+                        <span className="font-mono-nums font-semibold text-xs">{formatCurrency(item.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* TOTALES FINALES */}
             <section className="bg-primary/5 p-5 rounded-xl border border-primary/20 space-y-4">
