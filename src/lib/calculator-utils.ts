@@ -9,15 +9,12 @@ export type ImportCosts = {
   vatRate: number;
   usdToArsRate: number; // 1 USD = X ARS
   fobAdjustmentUSD?: number;
-  fscPercentage?: number; // Fuel Surcharge % sobre flete (default 28%)
   customsFreightPercentage?: number; // % del FOB que DHL declara como flete aduanero (default 10.7%)
-  dhlHandlingFee?: number; // Cargo fijo de DHL por manejo de documentación (default 15 USD)
 };
 
 export type ImportBreakdown = {
   itemValueUSD: number;
   baseShipping: number;
-  fscAmount: number;
   insurance: number;
   dhlHandlingFee: number;
   totalLogisticsUSD: number;
@@ -32,28 +29,29 @@ export type ImportBreakdown = {
   totalAcquisitionCostARS: number;
 };
 
+// Constante fija: cargo de gestion aduanera DHL por item
+// Referencia: USD 15 / 690 items = ~USD 0.022 por item
+const DHL_HANDLING_FEE = 0.02;
+
 export function calculateImportBreakdown(costs: ImportCosts): ImportBreakdown {
   const {
     itemValueCNY, exchangeRate, weight, shippingCostPerKg,
     miscellaneous, tariffRate, statisticalFee, vatRate,
     usdToArsRate, fobAdjustmentUSD = 0,
-    fscPercentage = 28,
     customsFreightPercentage = 10.7,
-    dhlHandlingFee = 15,
   } = costs;
 
   // 1. FOB Declarado
   const itemValueUSD = itemValueCNY * exchangeRate;
 
-  // 2. Logística Real (lo que pagás al forwarder)
+  // 2. Logistica Real (lo que pagas al forwarder)
   const weightKg = weight / 1000;
   const baseShipping = weightKg * shippingCostPerKg;
-  const fscAmount = baseShipping * (fscPercentage / 100);
   const insurance = itemValueUSD * 0.01; // 1% del FOB
-  const totalLogisticsUSD = baseShipping + fscAmount + insurance + dhlHandlingFee;
+  const dhlHandlingFee = DHL_HANDLING_FEE;
+  const totalLogisticsUSD = baseShipping + insurance + dhlHandlingFee;
 
-  // 3. Base Aduana (CIF) — lo que DHL declara a Aduana
-  // El flete aduanero es lo que DHL declara, no lo que vos pagás
+  // 3. CIF (Base Aduana) - lo que DHL declara a Aduana
   const customsFreight = itemValueUSD * (customsFreightPercentage / 100);
   const cifValue = itemValueUSD + customsFreight + insurance;
 
@@ -69,7 +67,7 @@ export function calculateImportBreakdown(costs: ImportCosts): ImportBreakdown {
   const totalAcquisitionCostARS = totalAcquisitionCostUSD * usdToArsRate;
 
   return {
-    itemValueUSD, baseShipping, fscAmount, insurance, dhlHandlingFee,
+    itemValueUSD, baseShipping, insurance, dhlHandlingFee,
     totalLogisticsUSD, customsFreight, cifValue, dutyAmount,
     statisticalAmount, taxableBaseForVat, vatAmount,
     totalTaxesUSD, totalAcquisitionCostUSD, totalAcquisitionCostARS,
