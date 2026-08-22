@@ -168,10 +168,6 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                   <span className="font-medium">{formatCurrency(breakdown.baseShipping)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">FSC Surcharge ({formData.fscPercentage || 28}% s/ flete)</span>
-                  <span className="font-medium">{formatCurrency(breakdown.fscAmount)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
                   <span className="text-foreground/70">Seguro (1% s/ FOB)</span>
                   <span className="font-medium">{formatCurrency(breakdown.insurance)}</span>
                 </div>
@@ -476,7 +472,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
           <p>- Seguro: 1% del FOB (incluido en CIF y en logistica real).</p>
           <p>- Flete Aduanero: % del FOB que DHL declara ante Aduana (no es lo que pagas).</p>
           <p>- CIF = FOB + Flete Aduanero + Seguro (base para calcular impuestos).</p>
-          <p>- Cargo DHL Manejo: cargo fijo por gestion aduanera.</p>
+          <p>- Cargo DHL Manejo: cargo fijo por gestion aduanera (USD 0.02/item).</p>
           <p>- Impuestos (DIE + Estadistica + IVA) se calculan sobre el CIF.</p>
         </div>
       </div>
