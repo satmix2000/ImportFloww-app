@@ -29,9 +29,7 @@ const formSchema = z.object({
   exchangeRate: z.coerce.number().min(0.0001, "Tasa invalida").default(0.138),
   weight: z.coerce.number().min(0, "Debe ser positivo").default(0),
   shippingCostPerKg: z.coerce.number().min(0, "Debe ser positivo").default(13.00),
-  fscPercentage: z.coerce.number().min(0).max(100).default(28),
   customsFreightPercentage: z.coerce.number().min(0).max(100).default(10.7),
-  dhlHandlingFee: z.coerce.number().min(0).default(15),
   miscellaneous: z.coerce.number().min(0, "Debe ser positivo").default(0),
   productDescription: z.string().min(5, "Descripcion muy corta"),
   hsCode: z.string().optional(),
@@ -66,9 +64,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       exchangeRate: 0.138,
       weight: 0,
       shippingCostPerKg: 13.00,
-      fscPercentage: 28,
       customsFreightPercentage: 10.7,
-      dhlHandlingFee: 15,
       miscellaneous: 0,
       productDescription: "",
       hsCode: "",
@@ -306,41 +302,13 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
               />
               <FormField
                 control={form.control}
-                name="fscPercentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>FSC Surcharge (%)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                    <FormDescription className="text-[10px] text-slate-400">
-                      Fuel Surcharge sobre el flete (varia mensual)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="customsFreightPercentage"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Flete Aduanero (%)</FormLabel>
                     <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
                     <FormDescription className="text-[10px] text-slate-400">
-                      % del FOB que DHL declara como flete ante Aduana
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dhlHandlingFee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cargo DHL Manejo (USD)</FormLabel>
-                    <FormControl><Input type="number" step="1" {...field} /></FormControl>
-                    <FormDescription className="text-[10px] text-slate-400">
-                      Cargo fijo de DHL por gestion aduanera
+                      % del FOB que DHL declara ante Aduana
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
