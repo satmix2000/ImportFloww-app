@@ -8,68 +8,71 @@ export type ImportCosts = {
   statisticalFee: number; // Tasa de Estadística (%)
   vatRate: number;
   usdToArsRate: number; // 1 USD = X ARS
-  fobAdjustmentUSD?: number; // <--- NUEVO: El "ajuste" que no ve la aduana
+  fobAdjustmentUSD?: number;
+  fscPercentage?: number; // Fuel Surcharge % sobre flete (default 28%)
+  customsFreightPercentage?: number; // % del FOB que DHL declara como flete aduanero (default 10.7%)
+  dhlHandlingFee?: number; // Cargo fijo de DHL por manejo de documentación (default 15 USD)
 };
 
 export type ImportBreakdown = {
   itemValueUSD: number;
   baseShipping: number;
-  fscScreen: number;
-  almacenaje: number;
-  cargoTerminal: number;
+  fscAmount: number;
   insurance: number;
-  logisticsServiceIva: number; 
+  dhlHandlingFee: number;
   totalLogisticsUSD: number;
+  customsFreight: number;
   cifValue: number;
   dutyAmount: number;
   statisticalAmount: number;
   taxableBaseForVat: number;
   vatAmount: number;
+  totalTaxesUSD: number;
   totalAcquisitionCostUSD: number;
   totalAcquisitionCostARS: number;
 };
 
 export function calculateImportBreakdown(costs: ImportCosts): ImportBreakdown {
-  const { 
-    itemValueCNY, exchangeRate, weight, shippingCostPerKg, 
-    miscellaneous, tariffRate, statisticalFee, vatRate, 
-    usdToArsRate, fobAdjustmentUSD = 0 // <--- Recuperamos el ajuste con valor default 0
+  const {
+    itemValueCNY, exchangeRate, weight, shippingCostPerKg,
+    miscellaneous, tariffRate, statisticalFee, vatRate,
+    usdToArsRate, fobAdjustmentUSD = 0,
+    fscPercentage = 28,
+    customsFreightPercentage = 10.7,
+    dhlHandlingFee = 15,
   } = costs;
 
-  // 1. FOB Declarado (el que bajamos con el botón "adj." para Aduana)
+  // 1. FOB Declarado
   const itemValueUSD = itemValueCNY * exchangeRate;
 
-  // 2. Logística Real (Lo que realmente pagás al courier/transporte)
+  // 2. Logística Real (lo que pagás al forwarder)
   const weightKg = weight / 1000;
   const baseShipping = weightKg * shippingCostPerKg;
-  const fscScreen = baseShipping * 0.28; 
-  const almacenaje = weightKg * 1; 
-  const cargoTerminal = itemValueUSD * 0.10; 
-  const insurance = itemValueUSD * 0.01; 
-  const logisticsServiceIva = (almacenaje + cargoTerminal + insurance) * 0.21;
-  const totalLogisticsUSD = baseShipping + fscScreen + almacenaje + cargoTerminal + insurance + logisticsServiceIva;
+  const fscAmount = baseShipping * (fscPercentage / 100);
+  const insurance = itemValueUSD * 0.01; // 1% del FOB
+  const totalLogisticsUSD = baseShipping + fscAmount + insurance + dhlHandlingFee;
 
-  // 3. Base Aduana (Sobre el valor FOB Declarado)
-  const aduanaFreightAdjustment = itemValueUSD * 0.20; 
-  const cifValue = itemValueUSD + aduanaFreightAdjustment + insurance;
-  
+  // 3. Base Aduana (CIF) — lo que DHL declara a Aduana
+  // El flete aduanero es lo que DHL declara, no lo que vos pagás
+  const customsFreight = itemValueUSD * (customsFreightPercentage / 100);
+  const cifValue = itemValueUSD + customsFreight + insurance;
+
+  // 4. Impuestos (calculados sobre CIF)
   const dutyAmount = cifValue * (tariffRate / 100);
   const statisticalAmount = cifValue * (statisticalFee / 100);
   const taxableBaseForVat = cifValue + dutyAmount + statisticalAmount;
   const vatAmount = taxableBaseForVat * (vatRate / 100);
-  
-  // 4. Totales Finales (Costo Real de Bolsillo)
-  const totalTaxesAduana = dutyAmount + statisticalAmount + vatAmount;
-  
-  // Aquí está la clave: Sumamos el fobAdjustmentUSD para que el costo total sea el real
-  const totalAcquisitionCostUSD = itemValueUSD + fobAdjustmentUSD + totalLogisticsUSD + totalTaxesAduana + (miscellaneous || 0);
+  const totalTaxesUSD = dutyAmount + statisticalAmount + vatAmount;
+
+  // 5. Costo Total Real de Bolsillo
+  const totalAcquisitionCostUSD = itemValueUSD + fobAdjustmentUSD + totalLogisticsUSD + totalTaxesUSD + (miscellaneous || 0);
   const totalAcquisitionCostARS = totalAcquisitionCostUSD * usdToArsRate;
 
   return {
-    itemValueUSD, baseShipping, fscScreen, almacenaje, cargoTerminal, insurance,
-    logisticsServiceIva, totalLogisticsUSD, cifValue, dutyAmount,
+    itemValueUSD, baseShipping, fscAmount, insurance, dhlHandlingFee,
+    totalLogisticsUSD, customsFreight, cifValue, dutyAmount,
     statisticalAmount, taxableBaseForVat, vatAmount,
-    totalAcquisitionCostUSD, totalAcquisitionCostARS,
+    totalTaxesUSD, totalAcquisitionCostUSD, totalAcquisitionCostARS,
   };
 }
 
