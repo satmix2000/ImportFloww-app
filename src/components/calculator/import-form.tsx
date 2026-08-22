@@ -26,16 +26,19 @@ import { saveNcmEntry, initializeDatabaseWithSeed, searchNcm, type NcmEntry } fr
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
   fobAdjustmentUSD: z.coerce.number().default(0),
-  exchangeRate: z.coerce.number().min(0.0001, "Tasa inválida").default(0.138),
+  exchangeRate: z.coerce.number().min(0.0001, "Tasa invalida").default(0.138),
   weight: z.coerce.number().min(0, "Debe ser positivo").default(0),
-  shippingCostPerKg: z.coerce.number().min(0, "Debe ser positivo").default(14.50),
+  shippingCostPerKg: z.coerce.number().min(0, "Debe ser positivo").default(13.00),
+  fscPercentage: z.coerce.number().min(0).max(100).default(28),
+  customsFreightPercentage: z.coerce.number().min(0).max(100).default(10.7),
+  dhlHandlingFee: z.coerce.number().min(0).default(15),
   miscellaneous: z.coerce.number().min(0, "Debe ser positivo").default(0),
-  productDescription: z.string().min(5, "Descripción muy corta"),
+  productDescription: z.string().min(5, "Descripcion muy corta"),
   hsCode: z.string().optional(),
-  tariffRate: z.coerce.number().min(0).max(100).default(18), 
+  tariffRate: z.coerce.number().min(0).max(100).default(18),
   statisticalFee: z.coerce.number().min(0).max(100).default(3),
   vatRate: z.coerce.number().min(0).max(100).default(21),
-  usdToArsRate: z.coerce.number().min(1, "Tasa inválida").default(1100),
+  usdToArsRate: z.coerce.number().min(1, "Tasa invalida").default(1100),
   // Campos MercadoLibre
   precioCompetenciaML: z.coerce.number().min(0, "Debe ser positivo").default(0),
   comisionMLPorcentaje: z.coerce.number().min(0).max(100).default(16),
@@ -62,7 +65,10 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       fobAdjustmentUSD: 0,
       exchangeRate: 0.138,
       weight: 0,
-      shippingCostPerKg: 14.50,
+      shippingCostPerKg: 13.00,
+      fscPercentage: 28,
+      customsFreightPercentage: 10.7,
+      dhlHandlingFee: 15,
       miscellaneous: 0,
       productDescription: "",
       hsCode: "",
@@ -101,10 +107,10 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
   const watchRate = form.watch("exchangeRate");
   const usdEquivalent = (watchCNY || 0) * (watchRate || 0);
 
-  // Cálculo interno de métricas ML
+  // Calculo interno de metricas ML
   const calcularMetricasMLInterno = (precioCompetencia: number, comisionPorcentaje: number) => {
     if (!precioCompetencia || precioCompetencia <= 0) return null;
-    
+
     let costoFijo = 0;
     let envioGratis = 0;
     const comisionMLDecimal = comisionPorcentaje / 100;
@@ -124,7 +130,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     };
   };
 
-  // Submit con métricas ML
+  // Submit con metricas ML
   const handleFormSubmit = (data: ImportFormData) => {
     const metricasML = calcularMetricasMLInterno(data.precioCompetenciaML, data.comisionMLPorcentaje);
     onCalculate({ ...data, metricasML });
@@ -211,7 +217,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
-                      <FormLabel>Monto en Yuanes (¥)</FormLabel>
+                      <FormLabel>Monto en Yuanes</FormLabel>
                       <button
                         type="button"
                         onClick={() => {
@@ -264,12 +270,12 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
             </CardContent>
           </Card>
 
-          {/* Card Logística */}
+          {/* Card Logistica */}
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
             <CardHeader className="bg-slate-800 text-white pb-6">
               <div className="flex items-center gap-2">
                 <Truck className="w-5 h-5 text-accent" />
-                <CardTitle className="font-headline tracking-tight">Logística y Flete</CardTitle>
+                <CardTitle className="font-headline tracking-tight">Logistica y Flete</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,6 +297,65 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <FormLabel>Flete por Kilo (USD)</FormLabel>
                     <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      Tarifa del forwarder por kg
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fscPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>FSC Surcharge (%)</FormLabel>
+                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      Fuel Surcharge sobre el flete (varia mensual)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="customsFreightPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Flete Aduanero (%)</FormLabel>
+                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      % del FOB que DHL declara como flete ante Aduana
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dhlHandlingFee"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cargo DHL Manejo (USD)</FormLabel>
+                    <FormControl><Input type="number" step="1" {...field} /></FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      Cargo fijo de DHL por gestion aduanera
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="miscellaneous"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gastos Varios (USD)</FormLabel>
+                    <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                    <FormDescription className="text-[10px] text-slate-400">
+                      Otros gastos no incluidos arriba
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -313,7 +378,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
-                      <FormLabel>Descripción del Producto</FormLabel>
+                      <FormLabel>Descripcion del Producto</FormLabel>
                       <div className="flex gap-1">
                         <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-primary text-primary font-bold" onClick={() => setShowLocalDb(!showLocalDb)}>
                           <Database className="w-3 h-3" />
@@ -331,7 +396,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 )}
               />
 
-              {/* Búsqueda en base local */}
+              {/* Busqueda en base local */}
               {showLocalDb && (
                 <div className="bg-green-50/50 p-3 rounded-lg border border-green-100 space-y-3">
                   <p className="text-[10px] font-bold text-green-800 uppercase flex items-center gap-1">
@@ -341,7 +406,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <div className="relative">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar por código o descripción..."
+                      placeholder="Buscar por codigo o descripcion..."
                       value={localDbQuery}
                       onChange={(e) => handleLocalDbSearch(e.target.value)}
                       className="pl-7 h-8 text-xs"
@@ -368,12 +433,12 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   )}
                   {localDbQuery.length >= 2 && localDbResults.length === 0 && (
                     <p className="text-[10px] text-muted-foreground text-center py-2">
-                      Sin resultados. Usa el Asistente IA para generar nuevos códigos.
+                      Sin resultados. Usa el Asistente IA para generar nuevos codigos.
                     </p>
                   )}
                   <a href="/ncm" target="_blank" className="text-[10px] text-green-700 hover:underline flex items-center gap-1">
                     <ExternalLink className="w-2.5 h-2.5" />
-                    Ver catálogo completo
+                    Ver catalogo completo
                   </a>
                 </div>
               )}
@@ -396,7 +461,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 </div>
               )}
 
-              {/* Validación VUCE */}
+              {/* Validacion VUCE */}
               <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fuente Oficial</span>
                 <a href="https://vuce.gob.ar/vuce-consultas-arancelarias/" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
@@ -409,13 +474,13 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem><FormLabel className="text-xs">DIE Extrazona (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="statisticalFee" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs">Estadística (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
+                  <FormItem><FormLabel className="text-xs">Estadistica (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="vatRate" render={({ field }) => (
                   <FormItem><FormLabel className="text-xs">IVA (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="hsCode" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs">Posición NCM</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                  <FormItem><FormLabel className="text-xs">Posicion NCM</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
                 )} />
               </div>
             </CardContent>
@@ -443,7 +508,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                       <Input type="number" placeholder="Ej. 5818 (Opcional)" className="border-orange-200 focus:border-orange-500 bg-white" {...field} />
                     </FormControl>
                     <FormDescription className="text-[10px] text-slate-400">
-                      Dejalo en 0 si solo querés ver el costo de importación.
+                      Dejalo en 0 si solo queres ver el costo de importacion.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -454,7 +519,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="comisionMLPorcentaje"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-700 font-medium text-xs">Comisión de la Categoría (%)</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium text-xs">Comision de la Categoria (%)</FormLabel>
                     <FormControl>
                       <Input type="number" step="1" className="border-orange-200 focus:border-orange-500 bg-white" {...field} />
                     </FormControl>
