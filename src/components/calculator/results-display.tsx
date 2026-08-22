@@ -60,8 +60,8 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
   const comisionPorcentaje = formData.comisionMLPorcentaje || 16;
   const costoImportacionARS = breakdown.totalAcquisitionCostARS;
 
-  // Simulación ML
-  let simulaciónML = null;
+  // Simulacion ML
+  let simulacionML = null;
 
   if (precioCompetencia > 0) {
     const comisionPesos = precioCompetencia * (comisionPorcentaje / 100);
@@ -80,7 +80,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
     const margenRealPercentage = (gananciaNetaARS / precioCompetencia) * 100;
     const esRentable = margenRealPercentage >= 30;
 
-    simulaciónML = {
+    simulacionML = {
       comisionPesos,
       costoFijoML,
       envioGratisML,
@@ -114,7 +114,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
 
     const skuData: SkuExistente = {
       id: skuID,
-      margen: simulaciónML?.margenRealPercentage || 0,
+      margen: simulacionML?.margenRealPercentage || 0,
       precio: precioCompetencia,
       fecha: new Date().toISOString(),
     };
@@ -143,7 +143,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
         </CardHeader>
         <CardContent className="pt-6 px-6 pb-8">
           <div className="space-y-6">
-            {/* Sección de Conversión */}
+            {/* Seccion de Conversion */}
             <section className="bg-muted/30 p-4 rounded-lg border border-dashed">
               <div className="flex justify-between items-end gap-2">
                 <div>
@@ -157,39 +157,57 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
               </div>
             </section>
 
-            {/* Logística Detallada */}
+            {/* Logistica Detallada */}
             <section>
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Truck className="w-4 h-4" /> Costos Logísticos (Courier)
+                <Truck className="w-4 h-4" /> Costos Logisticos (Courier)
               </h3>
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Flete Base ({formData.weight}g)</span>
+                  <span className="text-foreground/70">Flete Base ({formData.weight}g x {formData.shippingCostPerKg} USD/kg)</span>
                   <span className="font-medium">{formatCurrency(breakdown.baseShipping)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Fsc Screen (28% flete)</span>
-                  <span className="font-medium">{formatCurrency(breakdown.fscScreen)}</span>
+                  <span className="text-foreground/70">FSC Surcharge ({formData.fscPercentage || 28}% s/ flete)</span>
+                  <span className="font-medium">{formatCurrency(breakdown.fscAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Almacenaje (1 USD/kg) - Gravado</span>
-                  <span className="font-medium">{formatCurrency(breakdown.almacenaje)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Cargo Terminal (10% FOB) - Gravado</span>
-                  <span className="font-medium">{formatCurrency(breakdown.cargoTerminal)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Seguro (1% FOB) - Gravado</span>
+                  <span className="text-foreground/70">Seguro (1% s/ FOB)</span>
                   <span className="font-medium">{formatCurrency(breakdown.insurance)}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm italic text-destructive">
-                  <span className="text-foreground/70 font-semibold text-[10px] uppercase">IVA 21% s/ Servicios gravados</span>
-                  <span className="font-bold">{formatCurrency(breakdown.logisticsServiceIva)}</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-foreground/70">Cargo DHL Manejo</span>
+                  <span className="font-medium">{formatCurrency(breakdown.dhlHandlingFee)}</span>
+                </div>
+                <Separator className="my-2" />
+                <div className="flex justify-between items-center text-base font-bold text-slate-700">
+                  <span>Total Logistica Real</span>
+                  <span>{formatCurrency(breakdown.totalLogisticsUSD)}</span>
+                </div>
+              </div>
+            </section>
+
+            {/* CIF - Base Aduana */}
+            <section className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+              <h3 className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Landmark className="w-4 h-4" /> CIF (Base Imponible Aduana)
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-foreground/70">FOB Declarado</span>
+                  <span className="font-medium">{formatCurrency(breakdown.itemValueUSD)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-foreground/70">Flete Aduanero ({formData.customsFreightPercentage || 10.7}% s/ FOB)</span>
+                  <span className="font-medium">{formatCurrency(breakdown.customsFreight)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-foreground/70">Seguro (1% s/ FOB)</span>
+                  <span className="font-medium">{formatCurrency(breakdown.insurance)}</span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center text-base font-bold text-primary">
-                  <span>Total CIF (Base Imponible)</span>
+                  <span>CIF</span>
                   <span>{formatCurrency(breakdown.cifValue)}</span>
                 </div>
               </div>
@@ -198,27 +216,32 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
             {/* Impuestos */}
             <section>
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> Gravámenes Aduaneros (AFIP)
+                <ShieldCheck className="w-4 h-4" /> Gravamenes Aduaneros (AFIP)
               </h3>
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Derecho Importación ({formData.tariffRate}%)</span>
+                  <span className="text-foreground/70">Derecho Importacion ({formData.tariffRate}%)</span>
                   <span className="font-medium">{formatCurrency(breakdown.dutyAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-foreground/70">Tasa Estadística ({formData.statisticalFee}%)</span>
+                  <span className="text-foreground/70">Tasa Estadistica ({formData.statisticalFee}%)</span>
                   <span className="font-medium">{formatCurrency(breakdown.statisticalAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-semibold">
                   <span className="text-foreground/70">IVA Aduana ({formData.vatRate}%)</span>
                   <span className="font-medium text-destructive">{formatCurrency(breakdown.vatAmount)}</span>
                 </div>
+                <Separator className="my-2" />
+                <div className="flex justify-between items-center text-base font-bold text-slate-700">
+                  <span>Total Impuestos</span>
+                  <span>{formatCurrency(breakdown.totalTaxesUSD)}</span>
+                </div>
               </div>
             </section>
 
             <Separator className="bg-primary/10 h-[2px]" />
 
-            {/* Gráfico de desglose de costos */}
+            {/* Grafico de desglose de costos */}
             <section className="pt-2">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
                 <PieChart className="w-4 h-4" /> Desglose Visual de Costos
@@ -231,9 +254,9 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                         <Pie
                           data={[
                             { name: "FOB", value: Number(breakdown.itemValueUSD.toFixed(2)), color: "#3b82f6" },
-                            { name: "Logística", value: Number(breakdown.totalLogisticsUSD.toFixed(2)), color: "#f59e0b" },
+                            { name: "Logistica", value: Number(breakdown.totalLogisticsUSD.toFixed(2)), color: "#f59e0b" },
                             { name: "DIE", value: Number(breakdown.dutyAmount.toFixed(2)), color: "#ef4444" },
-                            { name: "Estadística", value: Number(breakdown.statisticalAmount.toFixed(2)), color: "#8b5cf6" },
+                            { name: "Estadistica", value: Number(breakdown.statisticalAmount.toFixed(2)), color: "#8b5cf6" },
                             { name: "IVA", value: Number(breakdown.vatAmount.toFixed(2)), color: "#10b981" },
                           ]}
                           cx="50%"
@@ -269,9 +292,9 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                   <div className="flex-1 space-y-1.5">
                     {[
                       { name: "FOB", value: breakdown.itemValueUSD, color: "bg-blue-500" },
-                      { name: "Logística", value: breakdown.totalLogisticsUSD, color: "bg-amber-500" },
+                      { name: "Logistica", value: breakdown.totalLogisticsUSD, color: "bg-amber-500" },
                       { name: "DIE", value: breakdown.dutyAmount, color: "bg-red-500" },
-                      { name: "Estadística", value: breakdown.statisticalAmount, color: "bg-violet-500" },
+                      { name: "Estadistica", value: breakdown.statisticalAmount, color: "bg-violet-500" },
                       { name: "IVA Aduana", value: breakdown.vatAmount, color: "bg-emerald-500" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between text-xs">
@@ -293,7 +316,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                 <span className="text-primary font-bold text-sm uppercase">Costo Total USD</span>
                 <span className="text-2xl font-black text-primary">{formatCurrency(breakdown.totalAcquisitionCostUSD)}</span>
               </div>
-              
+
               <div className="pt-3 border-t border-primary/10">
                 <div className="flex flex-col space-y-2">
                   <div className="flex items-center gap-2">
@@ -305,60 +328,60 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                       {formatARS(costoImportacionARS)}
                     </span>
                     <p className="text-[10px] font-bold text-muted-foreground text-right mt-1">
-                      COTIZACIÓN USD LIBRE: {formData.usdToArsRate}
+                      COTIZACION USD LIBRE: ${formData.usdToArsRate}
                     </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Simulación MercadoLibre */}
-            {simulaciónML && (
+            {/* Simulacion MercadoLibre */}
+            {simulacionML && (
               <section className="space-y-4 pt-2">
                 <Separator className="bg-orange-200 h-[1px]" />
                 <h3 className="text-xs font-bold text-orange-600 uppercase tracking-widest flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" /> Desglose de Salida: Mercado Libre FULL
                 </h3>
-                
+
                 <div className="space-y-2 text-sm bg-orange-50/30 p-4 rounded-lg border border-orange-100">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Precio Objetivo al Público:</span>
+                    <span className="text-slate-600">Precio Objetivo al Publico:</span>
                     <span className="font-semibold text-slate-900">{formatARS(precioCompetencia)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Comisión ML ({comisionPorcentaje}%):</span>
-                    <span className="font-medium text-destructive">-{formatARS(simulaciónML.comisionPesos)}</span>
+                    <span className="text-slate-600">Comision ML ({comisionPorcentaje}%):</span>
+                    <span className="font-medium text-destructive">-{formatARS(simulacionML.comisionPesos)}</span>
                   </div>
-                  {simulaciónML.costoFijoML > 0 && (
+                  {simulacionML.costoFijoML > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Costo Fijo Logístico FULL (&lt;100g):</span>
-                      <span className="font-medium text-destructive">-{formatARS(simulaciónML.costoFijoML)}</span>
+                      <span className="text-slate-600">Costo Fijo Logistico FULL (&lt;100g):</span>
+                      <span className="font-medium text-destructive">-{formatARS(simulacionML.costoFijoML)}</span>
                     </div>
                   )}
-                  {simulaciónML.envioGratisML > 0 && (
+                  {simulacionML.envioGratisML > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Envío Gratis Obligatorio (&gt;$33.000):</span>
-                      <span className="font-medium text-destructive">-{formatARS(simulaciónML.envioGratisML)}</span>
+                      <span className="text-slate-600">Envio Gratis Obligatorio (&gt;$33.000):</span>
+                      <span className="font-medium text-destructive">-{formatARS(simulacionML.envioGratisML)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center border-t border-orange-200/50 pt-2 font-medium">
-                    <span className="text-slate-600">Costo Base de Importación:</span>
+                    <span className="text-slate-600">Costo Base de Importacion:</span>
                     <span className="text-slate-700">-{formatARS(costoImportacionARS)}</span>
                   </div>
                 </div>
 
                 {/* Indicador de Margen */}
                 <div className={`p-5 rounded-xl border flex flex-col md:flex-row md:justify-between md:items-center gap-4 transition-colors ${
-                  simulaciónML.esRentable 
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-900" 
+                  simulacionML.esRentable
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-900"
                     : "bg-amber-500/10 border-amber-500/30 text-amber-900"
                 }`}>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-wide">
-                      {simulaciónML.esRentable ? (
+                      {simulacionML.esRentable ? (
                         <>
                           <ArrowUpRight className="w-5 h-5 text-emerald-600" />
-                          <span className="text-emerald-700">¡Margen Objetivo Aprobado!</span>
+                          <span className="text-emerald-700">Margen Objetivo Aprobado!</span>
                         </>
                       ) : (
                         <>
@@ -367,20 +390,20 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                         </>
                       )}
                     </div>
-                    <p className={`text-[11px] leading-tight ${simulaciónML.esRentable ? "text-emerald-700/80" : "text-amber-700/80"}`}>
-                      {simulaciónML.esRentable 
-                        ? "Este SKU supera el 30% neto. Excelente candidato para el interés compuesto por volumen."
-                        : "Revisá el precio de compra o buscá un SKU de mayor densidad de valor para optimizar el flete."}
+                    <p className={`text-[11px] leading-tight ${simulacionML.esRentable ? "text-emerald-700/80" : "text-amber-700/80"}`}>
+                      {simulacionML.esRentable
+                        ? "Este SKU supera el 30% neto. Excelente candidato para el interes compuesto por volumen."
+                        : "Revisa el precio de compra o busca un SKU de mayor densidad de valor para optimizar el flete."}
                     </p>
                   </div>
 
                   <div className="text-right shrink-0 bg-white/90 px-4 py-2 rounded-lg shadow-sm border border-black/5">
                     <span className="text-[10px] font-bold text-slate-400 block uppercase">Ganancia Neta / Margen Real</span>
-                    <span className={`text-2xl font-black block tracking-tight ${simulaciónML.esRentable ? "text-emerald-600" : "text-amber-600"}`}>
-                      {formatARS(simulaciónML.gananciaNetaARS)}
+                    <span className={`text-2xl font-black block tracking-tight ${simulacionML.esRentable ? "text-emerald-600" : "text-amber-600"}`}>
+                      {formatARS(simulacionML.gananciaNetaARS)}
                     </span>
-                    <span className={`text-xs font-bold ${simulaciónML.esRentable ? "text-emerald-700" : "text-amber-700"}`}>
-                      {simulaciónML.margenRealPercentage}% Neto
+                    <span className={`text-xs font-bold ${simulacionML.esRentable ? "text-emerald-700" : "text-amber-700"}`}>
+                      {simulacionML.margenRealPercentage}% Neto
                     </span>
                   </div>
                 </div>
@@ -391,7 +414,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                 <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
                   <div>
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                      Identificador único del SKU
+                      Identificador unico del SKU
                     </label>
                     <div className="relative">
                       <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -409,12 +432,12 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 uppercase">
                         <AlertTriangle className="w-4 h-4 text-amber-600" />
-                        <span>¡Atención! Coincidencias en la base de datos:</span>
+                        <span>Atencion! Coincidencias en la base de datos:</span>
                       </div>
                       <div className="max-h-24 overflow-y-auto space-y-1 pr-1 text-xs">
                         {coincidencias.map((item) => (
-                          <div 
-                            key={item.id} 
+                          <div
+                            key={item.id}
                             onClick={() => setSkuName(item.id)}
                             className="flex justify-between items-center p-2 bg-white rounded border border-amber-100 hover:bg-amber-100/50 cursor-pointer transition-colors"
                           >
@@ -428,7 +451,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
 
                   {yaExisteSkuExacto && (
                     <p className="text-[10px] text-orange-600 font-bold">
-                      ⚠️ Este SKU ya existe. Se sobrescribirá con los nuevos datos.
+                      Este SKU ya existe. Se sobrescribira con los nuevos datos.
                     </p>
                   )}
 
@@ -437,7 +460,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                     disabled={!skuName.trim()}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold"
                   >
-                    {saved ? "✅ SKU Guardado" : "Guardar SKU en Base Local"}
+                    {saved ? "SKU Guardado" : "Guardar SKU en Base Local"}
                   </Button>
                 </div>
               </section>
@@ -449,9 +472,12 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3">
         <Info className="w-5 h-5 text-blue-500 shrink-0" />
         <div className="text-[11px] text-blue-800 leading-tight space-y-1">
-          <p><strong>Reglas de Negocio:</strong> Seguro es el 1% del FOB.</p>
-          <p><strong>Gravados con IVA 21%:</strong> Almacenaje, Cargo Terminal e Insurance (Seguro).</p>
-          <p>El CIF se calcula sumando FOB + Logística Total + Gastos Varios.</p>
+          <p><strong>Reglas de Negocio:</strong></p>
+          <p>- Seguro: 1% del FOB (incluido en CIF y en logistica real).</p>
+          <p>- Flete Aduanero: % del FOB que DHL declara ante Aduana (no es lo que pagas).</p>
+          <p>- CIF = FOB + Flete Aduanero + Seguro (base para calcular impuestos).</p>
+          <p>- Cargo DHL Manejo: cargo fijo por gestion aduanera.</p>
+          <p>- Impuestos (DIE + Estadistica + IVA) se calculan sobre el CIF.</p>
         </div>
       </div>
     </div>
