@@ -96,4 +96,4 @@ export const formatARS = (value: number) => {
     currency: 'ARS',
     minimumFractionDigits: 0,
   }).format(value);
-};
+}; 
