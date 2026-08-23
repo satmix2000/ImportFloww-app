@@ -15,9 +15,9 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#f8fafc" />
       </head>
-      <body className="bg-slate-950">{children}</body>
+      <body>{children}</body>
     </html>
   )
 }
