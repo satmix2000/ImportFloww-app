@@ -32,13 +32,13 @@ function RateTicker() {
 
   return (
     <div className="bg-black overflow-hidden border-b border-slate-800">
-      <div className="ticker-bar py-3">
+      <div className="ticker-bar py-2">
         <div className="ticker-content">
           {[...items, ...items, ...items].map((item, i) => (
             <div key={i} className="flex items-center gap-3 px-8">
-              <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse-dot shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
-              <span className="ticker-dot-text text-cyan-600 font-bold tracking-widest text-sm">{item.label}</span>
-              <span className={`ticker-dot-text font-black text-lg ${item.color}`}>{item.value}</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse-dot shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+              <span className="ticker-dot-text text-cyan-700 text-base">{item.label}</span>
+              <span className={`ticker-dot-text font-black text-xl ${item.color}`}>{item.value}</span>
             </div>
           ))}
         </div>
@@ -46,7 +46,6 @@ function RateTicker() {
     </div>
   );
 }
-
 function SupplyChainGraphic() {
   return (
     <div className="relative w-full h-80 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50/30 to-white border border-slate-200 shadow-lg">
