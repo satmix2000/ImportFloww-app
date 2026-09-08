@@ -23,22 +23,22 @@ function RateTicker() {
   }, []);
 
   const items = [
-    { label: "USD Blue", value: `$${rates.usd}`, color: "text-emerald-700" },
-    { label: "DIE Extrazona", value: "0-35%", color: "text-blue-700" },
-    { label: "IVA Aduana", value: "10.5-21%", color: "text-amber-700" },
-    { label: "Tasa Estadistica", value: "0-3%", color: "text-slate-600" },
-    { label: "Envio Courier", value: "~$13/kg", color: "text-blue-700" },
+    { label: "USD BLUE", value: `$${rates.usd}`, color: "text-emerald-400" },
+    { label: "DIE EXTRAZONA", value: "0-35%", color: "text-blue-400" },
+    { label: "IVA ADUANA", value: "10.5-21%", color: "text-amber-400" },
+    { label: "TASA ESTADISTICA", value: "0-3%", color: "text-slate-400" },
+    { label: "ENVIO COURIER", value: "~$13/KG", color: "text-blue-400" },
   ];
 
   return (
-    <div className="bg-slate-900 text-white overflow-hidden">
-      <div className="ticker-bar py-2">
+    <div className="bg-black overflow-hidden border-b border-slate-800">
+      <div className="ticker-bar py-2.5">
         <div className="ticker-content">
           {[...items, ...items, ...items].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs px-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-dot" />
-              <span className="text-slate-400 font-medium tracking-wide">{item.label}</span>
-              <span className={`font-bold font-mono-nums ${item.color}`}>{item.value}</span>
+            <div key={i} className="flex items-center gap-2.5 text-xs px-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot shadow-[0_0_4px_rgba(16,185,129,0.6)]" />
+              <span className="ticker-dot-text text-slate-500 font-mono font-bold tracking-widest text-[10px]">{item.label}</span>
+              <span className={`ticker-dot-text font-mono font-black text-sm ${item.color}`}>{item.value}</span>
             </div>
           ))}
         </div>
