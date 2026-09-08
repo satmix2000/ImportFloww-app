@@ -220,22 +220,14 @@
   background: hsl(25 95% 53%);
   border-radius: 2px;
 /* ─── Ticker dot matrix / LED effect ─── */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
 .ticker-dot-text {
-  -webkit-text-stroke: 0px transparent;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.2em;
   text-shadow:
-    0 0 1px currentColor,
-    0 0 3px currentColor;
-  letter-spacing: 0.15em;
-  background-image: radial-gradient(
-    circle,
-    currentColor 0.5px,
-    transparent 0.5px
-  );
-  background-size: 3px 3px;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: currentColor;
-  color: transparent;
+    0 0 3px currentColor,
+    0 0 8px currentColor;
 }
 
 }
