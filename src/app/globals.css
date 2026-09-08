@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=VT323&display=swap');
 
 @layer base {
   :root {
@@ -167,6 +167,15 @@
   animation-play-state: paused;
 }
 
+/* ─── Ticker dot matrix / LED effect ─── */
+.ticker-dot-text {
+  font-family: 'VT323', monospace;
+  text-shadow:
+    0 0 4px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
 /* ─── Custom scrollbar ─── */
 ::-webkit-scrollbar {
   width: 6px;
@@ -219,14 +228,4 @@
   height: 3px;
   background: hsl(25 95% 53%);
   border-radius: 2px;
-/* ─── Ticker dot matrix / LED effect ─── */
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-.ticker-dot-text {
-  font-family: 'VT323', monospace;
-  text-shadow:
-    0 0 4px currentColor,
-    0 0 10px currentColor,
-    0 0 20px currentColor;
-}
 }
