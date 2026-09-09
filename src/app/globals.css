@@ -46,8 +46,6 @@
   }
 }
 
-/* ─── Animations ─── */
-
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-8px) rotate(1deg); }
@@ -110,64 +108,21 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 5s ease-in-out infinite; animation-delay: 1s; }
+.animate-slide-in-right { animation: slide-in-right 0.5s ease-out forwards; }
+.animate-slide-in-up { animation: slide-in-up 0.4s ease-out forwards; }
+.animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+.animate-ship { animation: ship-sway 6s ease-in-out infinite; }
+.animate-plane { animation: plane-fly 8s ease-in-out infinite; }
+.animate-container { animation: container-move 5s ease-in-out infinite; }
+.animate-ticker { animation: ticker-scroll 30s linear infinite; }
+.animate-dash { animation: dash 2s linear infinite; }
 
-.animate-float-delayed {
-  animation: float-delayed 5s ease-in-out infinite;
-  animation-delay: 1s;
-}
+.ticker-bar { overflow: hidden; white-space: nowrap; }
+.ticker-content { display: inline-flex; gap: 2rem; animation: ticker-scroll 30s linear infinite; }
+.ticker-content:hover { animation-play-state: paused; }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.5s ease-out forwards;
-}
-
-.animate-slide-in-up {
-  animation: slide-in-up 0.4s ease-out forwards;
-}
-
-.animate-pulse-dot {
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-.animate-ship {
-  animation: ship-sway 6s ease-in-out infinite;
-}
-
-.animate-plane {
-  animation: plane-fly 8s ease-in-out infinite;
-}
-
-.animate-container {
-  animation: container-move 5s ease-in-out infinite;
-}
-
-.animate-ticker {
-  animation: ticker-scroll 30s linear infinite;
-}
-
-.animate-dash {
-  animation: dash 2s linear infinite;
-}
-
-/* ─── Ticker bar ─── */
-.ticker-bar {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.ticker-content {
-  display: inline-flex;
-  gap: 2rem;
-  animation: ticker-scroll 30s linear infinite;
-}
-
-.ticker-content:hover {
-  animation-play-state: paused;
-}
-
-/* ─── Ticker dot matrix / LED effect ─── */
 .ticker-dot-text {
   font-family: 'VT323', monospace;
   text-shadow:
@@ -176,25 +131,11 @@
     0 0 20px currentColor;
 }
 
-/* ─── Custom scrollbar ─── */
-::-webkit-scrollbar {
-  width: 6px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(210 20% 98%); }
+::-webkit-scrollbar-thumb { background: hsl(214 20% 85%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(222 47% 22%); }
 
-::-webkit-scrollbar-track {
-  background: hsl(210 20% 98%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(214 20% 85%);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(222 47% 22%);
-}
-
-/* ─── Gradient text utility ─── */
 .text-gradient {
   background: linear-gradient(135deg, hsl(222 47% 22%) 0%, hsl(222 47% 40%) 100%);
   -webkit-background-clip: text;
@@ -202,7 +143,6 @@
   background-clip: text;
 }
 
-/* ─── Glass effect ─── */
 .glass {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
@@ -210,19 +150,16 @@
   border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
-/* ─── Mono font for numbers ─── */
 .font-mono-nums {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Selection color ─── */
 ::selection {
   background: hsl(222 47% 22% / 0.15);
   color: hsl(222 47% 11%);
 }
 
-/* ─── Editorial accent line ─── */
 .accent-line {
   width: 40px;
   height: 3px;
