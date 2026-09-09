@@ -22,23 +22,29 @@ function RateTicker() {
     return () => clearInterval(interval);
   }, []);
 
+  const ledStyle: React.CSSProperties = {
+    fontFamily: "'VT323', monospace",
+    textShadow: "0 0 4px currentColor, 0 0 10px currentColor, 0 0 20px currentColor",
+    letterSpacing: "0.15em",
+  };
+
   const items = [
-    { label: "USD BLUE", value: `$${rates.usd}`, color: "text-yellow-400" },
-    { label: "DIE EXTRAZONA", value: "0-35%", color: "text-cyan-400" },
-    { label: "IVA ADUANA", value: "10.5-21%", color: "text-cyan-400" },
-    { label: "TASA ESTADISTICA", value: "0-3%", color: "text-cyan-400" },
-    { label: "ENVIO COURIER", value: "~$13/KG", color: "text-yellow-400" },
+    { label: "USD BLUE", value: `$${rates.usd}`, labelColor: "#0e7490", valueColor: "#facc15" },
+    { label: "DIE EXTRAZONA", value: "0-35%", labelColor: "#0e7490", valueColor: "#22d3ee" },
+    { label: "IVA ADUANA", value: "10.5-21%", labelColor: "#0e7490", valueColor: "#22d3ee" },
+    { label: "TASA ESTADISTICA", value: "0-3%", labelColor: "#0e7490", valueColor: "#22d3ee" },
+    { label: "ENVIO COURIER", value: "~$13/KG", labelColor: "#0e7490", valueColor: "#facc15" },
   ];
 
   return (
-    <div className="bg-black overflow-hidden border-b border-slate-800">
-      <div className="ticker-bar py-2">
+    <div style={{ backgroundColor: "#000", overflow: "hidden", borderBottom: "1px solid #1e293b" }}>
+      <div className="ticker-bar py-3">
         <div className="ticker-content">
           {[...items, ...items, ...items].map((item, i) => (
             <div key={i} className="flex items-center gap-3 px-8">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse-dot shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
-              <span className="ticker-dot-text text-cyan-700 text-base">{item.label}</span>
-              <span className={`ticker-dot-text font-black text-xl ${item.color}`}>{item.value}</span>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22d3ee", boxShadow: "0 0 6px rgba(34,211,238,0.8)" }} className="animate-pulse-dot" />
+              <span style={{ ...ledStyle, fontSize: 16, color: item.labelColor }}>{item.label}</span>
+              <span style={{ ...ledStyle, fontSize: 22, fontWeight: 900, color: item.valueColor }}>{item.value}</span>
             </div>
           ))}
         </div>
