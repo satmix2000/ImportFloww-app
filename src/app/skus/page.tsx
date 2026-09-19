@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Plus, Edit3, Trash2, TrendingUp, TrendingDown, Package, ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import { Search, Plus, Trash2, TrendingUp, TrendingDown, Package, ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatARS, calcularSkuRapido } from "@/lib/calculator-utils";
-import { getAllSkus, saveSku, deleteSku, makeSkuId, type SkuData } from "@/lib/sku-database";
-import { getMLConfig } from "@/lib/ml-constants";
+import { formatARS, calcularSkuRapido } from "@/lib/calculator-utils";
+import { getAllSkus, saveSku, deleteSku, type SkuData } from "@/lib/sku-database";
 import { SkuDetailEditor } from "@/components/sku/sku-detail-editor";
 
 const EXCHANGE_RATE = 0.14;
@@ -43,7 +41,7 @@ export default function SkusPage() {
       const calc = calcularSkuRapido(
         sku.precioCompraCNY,
         EXCHANGE_RATE,
-        100,
+        sku.pesoGramos,
         SHIPPING_COST_PER_KG,
         sku.precioVentaML,
         usdToArs,
@@ -67,6 +65,7 @@ export default function SkusPage() {
       linkProveedor: "",
       ncm: "",
       precioCompraCNY: 0,
+      pesoGramos: 100,
       costoEnvioUnitarioUSD: 0,
       precioVentaML: 0,
       margen: 0,
@@ -167,7 +166,7 @@ export default function SkusPage() {
               const calc = calcularSkuRapido(
                 sku.precioCompraCNY,
                 EXCHANGE_RATE,
-                100,
+                sku.pesoGramos,
                 SHIPPING_COST_PER_KG,
                 sku.precioVentaML,
                 usdToArs,
@@ -186,6 +185,11 @@ export default function SkusPage() {
                         {sku.ncm && (
                           <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">
                             {sku.ncm}
+                          </span>
+                        )}
+                        {sku.pesoGramos > 0 && (
+                          <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">
+                            {sku.pesoGramos}g
                           </span>
                         )}
                       </div>
