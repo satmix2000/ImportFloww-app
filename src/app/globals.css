@@ -125,9 +125,6 @@
 .animate-dash { animation: dash 2s linear infinite; }
 .animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
 
-.ticker-bar { overflow: hidden; white-space: nowrap; }
-.ticker-content { display: inline-flex; gap: 2rem; animation: ticker-scroll 30s linear infinite; }
-.ticker-content:hover { animation-play-state: paused; }
 
 .ticker-dot-text {
   font-family: 'VT323', monospace;
