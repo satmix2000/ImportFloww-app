@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Save, Trash2, X, ExternalLink, Calculator, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -32,7 +32,7 @@ export function SkuDetailEditor({
   const calc = calcularSkuRapido(
     sku.precioCompraCNY,
     exchangeRate,
-    100,
+    sku.pesoGramos,
     shippingCostPerKg,
     sku.precioVentaML,
     usdToArsRate,
@@ -135,7 +135,7 @@ export function SkuDetailEditor({
           {/* Costos */}
           <section>
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Costos</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Precio Compra (CNY)</label>
                 <input
@@ -143,6 +143,15 @@ export function SkuDetailEditor({
                   step="0.01"
                   value={sku.precioCompraCNY}
                   onChange={(e) => updateField("precioCompraCNY", Number(e.target.value))}
+                  className="w-full px-3 py-2 border rounded-lg text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Peso (gramos)</label>
+                <input
+                  type="number"
+                  value={sku.pesoGramos}
+                  onChange={(e) => updateField("pesoGramos", Number(e.target.value))}
                   className="w-full px-3 py-2 border rounded-lg text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
