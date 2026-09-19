@@ -1,6 +1,5 @@
 "use client";
 
-import { getMLConfig } from "@/lib/ml-constants";
 import React, { useState, useEffect } from "react";
 import { BarChart3, ReceiptText, ShieldCheck, Truck, Landmark, Info, ShoppingBag, ArrowUpRight, AlertTriangle, Search, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, formatYuan, formatARS, type ImportBreakdown } from "@/lib/calculator-utils";
 import { ImportFormData } from "./import-form";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { getMLConfig } from "@/lib/ml-constants";
 
 interface ResultsDisplayProps {
   formData: ImportFormData & { metricasML?: any };
@@ -57,8 +57,9 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
   const [coincidencias, setCoincidencias] = useState<SkuExistente[]>([]);
   const [saved, setSaved] = useState(false);
 
+  const mlConfig = getMLConfig();
   const precioCompetencia = formData.precioCompetenciaML || 0;
-  const comisionPorcentaje = formData.comisionMLPorcentaje || 16;
+  const comisionPorcentaje = formData.comisionMLPorcentaje || mlConfig.comisionPorcentaje;
   const costoImportacionARS = breakdown.totalAcquisitionCostARS;
 
   // Simulacion ML
@@ -66,16 +67,16 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
 
   if (precioCompetencia > 0) {
     const comisionPesos = precioCompetencia * (comisionPorcentaje / 100);
-    let costoFijoML = 0;
-    let envioGratisML = 0;
 
-    if (precioCompetencia < 33000) {
-      if (precioCompetencia <= 15999) costoFijoML = 1230;
-      else if (precioCompetencia <= 23999) costoFijoML = 2455;
-      else costoFijoML = 2925;
-    } else {
-      envioGratisML = 4500;
-    }
+    // Costo fijo FULL desde config
+    const rangoFijo = mlConfig.costosFijos.find(r => precioCompetencia <= r.hasta);
+    const costoFijoML = rangoFijo?.costo || 0;
+
+    // Envío gratis desde config
+    const rangoEnvio = mlConfig.envioGratis.find(
+      r => precioCompetencia >= r.desde && precioCompetencia <= r.hasta
+    );
+    const envioGratisML = rangoEnvio?.costo || 0;
 
     const gananciaNetaARS = precioCompetencia - comisionPesos - costoFijoML - envioGratisML - costoImportacionARS;
     const margenRealPercentage = (gananciaNetaARS / precioCompetencia) * 100;
@@ -351,13 +352,13 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                   </div>
                   {simulacionML.costoFijoML > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Costo Fijo Logistico FULL (&lt;100g):</span>
+                      <span className="text-slate-600">Costo Fijo Logistico FULL:</span>
                       <span className="font-medium text-destructive">-{formatARS(simulacionML.costoFijoML)}</span>
                     </div>
                   )}
                   {simulacionML.envioGratisML > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Envio Gratis Obligatorio (&gt;$33.000):</span>
+                      <span className="text-slate-600">Envio Gratis Obligatorio:</span>
                       <span className="font-medium text-destructive">-{formatARS(simulacionML.envioGratisML)}</span>
                     </div>
                   )}
