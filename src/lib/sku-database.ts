@@ -7,6 +7,7 @@ export interface SkuData {
   linkProveedor: string;
   ncm: string;
   precioCompraCNY: number;
+  pesoGramos: number;
   costoEnvioUnitarioUSD: number;
   precioVentaML: number;
   margen: number;
