@@ -96,4 +96,76 @@ export const formatARS = (value: number) => {
     currency: 'ARS',
     minimumFractionDigits: 0,
   }).format(value);
+// Cálculo rápido de SKU desde la base
+import { getMLConfig } from "./ml-constants";
+
+export function calcularSkuRapido(
+  precioCompraCNY: number,
+  exchangeRate: number,
+  pesoGramos: number,
+  shippingCostPerKg: number,
+  precioVentaML: number,
+  usdToArsRate: number,
+  tariffRate: number = 18,
+  statisticalFee: number = 3,
+  vatRate: number = 21,
+) {
+  const mlConfig = getMLConfig();
+  const comisionPorcentaje = mlConfig.comisionPorcentaje;
+
+  // Costo FOB
+  const fobUSD = precioCompraCNY * exchangeRate;
+
+  // Logística real
+  const pesoKg = pesoGramos / 1000;
+  const baseShipping = pesoKg * shippingCostPerKg;
+  const insurance = fobUSD * 0.01;
+  const dhlHandling = 0.02;
+  const totalLogistica = baseShipping + insurance + dhlHandling;
+
+  // CIF
+  const customsFreight = fobUSD * 0.107;
+  const cif = fobUSD + customsFreight + insurance;
+
+  // Impuestos
+  const die = cif * (tariffRate / 100);
+  const estadistica = cif * (statisticalFee / 100);
+  const taxableBase = cif + die + estadistica;
+  const iva = taxableBase * (vatRate / 100);
+  const totalImpuestos = die + estadistica + iva;
+
+  // Costo total
+  const costoTotalUSD = fobUSD + totalLogistica + totalImpuestos;
+  const costoTotalARS = costoTotalUSD * usdToArsRate;
+
+  // ML
+  const comisionPesos = precioVentaML * (comisionPorcentaje / 100);
+  const rangoFijo = mlConfig.costosFijos.find(r => precioVentaML <= r.hasta);
+  const costoFijoML = rangoFijo?.costo || 0;
+  const rangoEnvio = mlConfig.envioGratis.find(
+    r => precioVentaML >= r.desde && precioVentaML <= r.hasta
+  );
+  const envioGratisML = rangoEnvio?.costo || 0;
+
+  // Resultado
+  const gananciaNetaARS = precioVentaML - comisionPesos - costoFijoML - envioGratisML - costoTotalARS;
+  const margen = (gananciaNetaARS / precioVentaML) * 100;
+
+  return {
+    costoImportUnitUSD: costoTotalUSD,
+    costoImportUnitARS: costoTotalARS,
+    comisionML: comisionPesos,
+    costoFijoML,
+    envioGratisML,
+    gananciaBrutaARS: precioVentaML - comisionPesos - costoFijoML - envioGratisML,
+    gananciaNetaARS,
+    margen: Number(margen.toFixed(2)),
+    rentable: margen >= 30,
+    detalle: {
+      fobUSD, baseShipping, insurance, dhlHandling, totalLogistica,
+      customsFreight, cif, die, estadistica, iva, totalImpuestos,
+    }
+  };
+}
+
 }; 
