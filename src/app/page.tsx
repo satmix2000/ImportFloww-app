@@ -33,7 +33,7 @@ function RateTicker() {
     { label: "DIE EXTRAZONA", value: "0-35%", labelColor: "#0e7490", valueColor: "#22d3ee" },
     { label: "IVA ADUANA", value: "10.5-21%", labelColor: "#0e7490", valueColor: "#22d3ee" },
     { label: "TASA ESTADISTICA", value: "0-3%", labelColor: "#0e7490", valueColor: "#22d3ee" },
-    { label: "ENVIO COURIER", value: "~$13/KG", labelColor: "#0e7490", valueColor: "#facc15" },
+    { label: "ENVIO COURIER", value: "~$11.2/KG", labelColor: "#0e7490", valueColor: "#facc15" },
   ];
 
   return (
