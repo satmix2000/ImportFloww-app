@@ -1,5 +1,6 @@
 "use client";
 
+import { MLSettingsPanel } from "@/components/calculator/ml-settings-panel";
 import React, { useState, useEffect } from "react";
 import { ImportForm, type ImportFormData } from "@/components/calculator/import-form";
 import { ResultsDisplay } from "@/components/calculator/results-display";
