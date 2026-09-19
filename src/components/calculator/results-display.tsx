@@ -10,51 +10,17 @@ import { formatCurrency, formatYuan, formatARS, type ImportBreakdown } from "@/l
 import { ImportFormData } from "./import-form";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getMLConfig } from "@/lib/ml-constants";
+import { getAllSkus, saveSku, makeSkuId, type SkuData } from "@/lib/sku-database";
 
 interface ResultsDisplayProps {
   formData: ImportFormData & { metricasML?: any };
   breakdown: ImportBreakdown;
 }
 
-interface SkuExistente {
-  id: string;
-  margen: number;
-  precio: number;
-  fecha: string;
-}
-
-const SKU_STORAGE_KEY = "importflow-skus-db";
-
-function getSkusFromStorage(): SkuExistente[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(SKU_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSkuToStorage(sku: SkuExistente): void {
-  if (typeof window === "undefined") return;
-  try {
-    const existing = getSkusFromStorage();
-    const idx = existing.findIndex(s => s.id === sku.id);
-    if (idx >= 0) {
-      existing[idx] = sku;
-    } else {
-      existing.push(sku);
-    }
-    localStorage.setItem(SKU_STORAGE_KEY, JSON.stringify(existing));
-  } catch (e) {
-    console.error("Error saving SKU:", e);
-  }
-}
-
 export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
   const [skuName, setSkuName] = useState("");
-  const [skusGuardados, setSkusGuardados] = useState<SkuExistente[]>([]);
-  const [coincidencias, setCoincidencias] = useState<SkuExistente[]>([]);
+  const [skusGuardados, setSkusGuardados] = useState<SkuData[]>([]);
+  const [coincidencias, setCoincidencias] = useState<SkuData[]>([]);
   const [saved, setSaved] = useState(false);
 
   const mlConfig = getMLConfig();
@@ -94,7 +60,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
 
   // Cargar SKUs guardados
   useEffect(() => {
-    setSkusGuardados(getSkusFromStorage());
+    setSkusGuardados(getAllSkus());
   }, [saved]);
 
   // Filtrar coincidencias en tiempo real
@@ -104,31 +70,48 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
       return;
     }
     const busqueda = skuName.toLowerCase().trim();
-    const filtrados = skusGuardados.filter(item => item.id.toLowerCase().includes(busqueda));
+    const filtrados = skusGuardados.filter(item =>
+      item.nombre.toLowerCase().includes(busqueda) ||
+      item.id.toLowerCase().includes(busqueda)
+    );
     setCoincidencias(filtrados);
   }, [skuName, skusGuardados]);
 
-  // Guardar SKU en localStorage
+  // Guardar SKU completo
   const handleGuardarSKU = () => {
     if (!skuName.trim()) return;
 
-    const skuID = skuName.trim().toLowerCase().replace(/\s+/g, "-");
+    const skuID = makeSkuId(skuName);
 
-    const skuData: SkuExistente = {
+    // Buscar si ya existe para preservar datos
+    const existente = skusGuardados.find(s => s.id === skuID);
+
+    const skuData: SkuData = {
       id: skuID,
+      nombre: skuName.trim(),
+      proveedor: existente?.proveedor || "",
+      linkProveedor: existente?.linkProveedor || "",
+      ncm: existente?.ncm || "",
+      precioCompraCNY: existente?.precioCompraCNY || 0,
+      pesoGramos: existente?.pesoGramos || formData.weight || 100,
+      costoEnvioUnitarioUSD: existente?.costoEnvioUnitarioUSD || 0,
+      precioVentaML: precioCompetencia,
       margen: simulacionML?.margenRealPercentage || 0,
-      precio: precioCompetencia,
-      fecha: new Date().toISOString(),
+      gananciaNetaARS: simulacionML?.gananciaNetaARS || 0,
+      rentable: simulacionML?.esRentable || false,
+      fechaCreacion: existente?.fechaCreacion || new Date().toISOString(),
+      fechaActualizacion: new Date().toISOString(),
+      notas: existente?.notas || "",
     };
 
-    saveSkuToStorage(skuData);
+    saveSku(skuData);
     setSaved(true);
     setSkuName("");
     setTimeout(() => setSaved(false), 3000);
   };
 
   const yaExisteSkuExacto = skusGuardados.some(
-    item => item.id === skuName.trim().toLowerCase().replace(/\s+/g, "-")
+    item => item.id === makeSkuId(skuName)
   );
 
   return (
@@ -436,10 +419,10 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
                         {coincidencias.map((item) => (
                           <div
                             key={item.id}
-                            onClick={() => setSkuName(item.id)}
+                            onClick={() => setSkuName(item.nombre)}
                             className="flex justify-between items-center p-2 bg-white rounded border border-amber-100 hover:bg-amber-100/50 cursor-pointer transition-colors"
                           >
-                            <span className="font-mono font-bold text-slate-800">{item.id}</span>
+                            <span className="font-mono font-bold text-slate-800">{item.nombre}</span>
                             <span className="text-slate-500">Margen: {item.margen}%</span>
                           </div>
                         ))}
