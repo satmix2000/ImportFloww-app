@@ -1,3 +1,5 @@
+import { getMLConfig } from "./ml-constants";
+
 export type ImportCosts = {
   itemValueCNY: number;
   exchangeRate: number; // 1 CNY = X USD
@@ -96,9 +98,9 @@ export const formatARS = (value: number) => {
     currency: 'ARS',
     minimumFractionDigits: 0,
   }).format(value);
-// Cálculo rápido de SKU desde la base
-import { getMLConfig } from "./ml-constants";
+};
 
+// Cálculo rápido de SKU desde la base
 export function calcularSkuRapido(
   precioCompraCNY: number,
   exchangeRate: number,
@@ -167,5 +169,3 @@ export function calcularSkuRapido(
     }
   };
 }
-
-}; 
