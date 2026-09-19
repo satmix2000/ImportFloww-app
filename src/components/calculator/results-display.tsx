@@ -1,5 +1,6 @@
 "use client";
 
+import { getMLConfig } from "@/lib/ml-constants";
 import React, { useState, useEffect } from "react";
 import { BarChart3, ReceiptText, ShieldCheck, Truck, Landmark, Info, ShoppingBag, ArrowUpRight, AlertTriangle, Search, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
