@@ -8,7 +8,7 @@ import { calculateImportBreakdown, type ImportBreakdown } from "@/lib/calculator
 import { Globe, TrendingUp, Ship, Package, BarChart3, Shield, Zap, ArrowRight, Anchor, FileText, DollarSign, MapPin, Boxes, Truck } from "lucide-react";
 
 function RateTicker() {
-  const [rates, setRates] = useState<{ usd: number; cny: number }>({ usd: 1430, cny: 0 });
+  const [rates, setRates] = useState<{ usd: number; cny: number }>({ usd: 0, cny: 0 });
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -29,28 +29,31 @@ function RateTicker() {
     letterSpacing: "0.15em",
   };
 
-  const items = [
-    { label: "USD BLUE", value: `$${rates.usd}`, labelColor: "#0e7490", valueColor: "#facc15" },
+ const items = [
+    { label: "USD BLUE", value: rates.usd ? `$$$${rates.usd}` : "...", labelColor: "#0e7490", valueColor: "#facc15" },
     { label: "DIE EXTRAZONA", value: "0-35%", labelColor: "#0e7490", valueColor: "#22d3ee" },
     { label: "IVA ADUANA", value: "10.5-21%", labelColor: "#0e7490", valueColor: "#22d3ee" },
     { label: "TASA ESTADISTICA", value: "0-3%", labelColor: "#0e7490", valueColor: "#22d3ee" },
     { label: "ENVIO COURIER", value: "~$11.2/KG", labelColor: "#0e7490", valueColor: "#facc15" },
-  ];
+];
 
   return (
-    <div style={{ backgroundColor: "#000", overflow: "hidden", borderBottom: "1px solid #1e293b" }}>
-      <div className="ticker-bar py-3">
-        <div className="ticker-content">
-          {[...items, ...items, ...items].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 px-8">
-              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22d3ee", boxShadow: "0 0 6px rgba(34,211,238,0.8)" }} className="animate-pulse-dot" />
-              <span style={{ ...ledStyle, fontSize: 16, color: item.labelColor }}>{item.label}</span>
-              <span style={{ ...ledStyle, fontSize: 22, fontWeight: 900, color: item.valueColor }}>{item.value}</span>
-            </div>
-          ))}
+   <div style={{ backgroundColor: "#000", overflow: "hidden", borderBottom: "1px solid #1e293b", height: "42px" }}>
+  <div className="ticker-bar">
+    <div className="ticker-content">
+      {[...items, ...items, ...items].map((item, i) => (
+        <div key={i} className="flex items-center gap-3 px-8">
+          <span
+            className="animate-pulse-dot"
+            style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22d3ee", boxShadow: "0 0 6px rgba(34,211,238,0.8)" }}
+          />
+          <span className="ticker-led animate-glow-pulse" style={{ fontSize: 16, color: item.labelColor }}>{item.label}</span>
+          <span className="ticker-led" style={{ fontSize: 16, fontWeight: 900, color: item.valueColor }}>{item.value}</span>
         </div>
-      </div>
+      ))}
     </div>
+  </div>
+</div>
   );
 }
 function SupplyChainGraphic() {
@@ -199,6 +202,7 @@ export default function Home() {
           </nav>
         </div>
       </header>
+      <MLSettingsPanel />
 
       <main className="max-w-7xl mx-auto px-4">
         {!calculation && (
