@@ -18,45 +18,7 @@ export interface SkuData {
   notas: string;
 }
 
-export interface SkuCalculado extends SkuData {
-  costoImportacionUnitUSD: number;
-  costoImportacionUnitARS: number;
-  comisionML: number;
-  costoFijoML: number;
-  envioGratisML: number;
-  gananciaBrutaARS: number;
-}
-
 const DB_KEY = "importflow-skus-db";
-
-export function getAllSkus(): SkuData[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(DB_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    // Migrar SKUs viejos al formato nuevo
-    return parsed.map((s: any) => ({
-      id: s.id || "",
-      nombre: s.nombre || s.id || "Sin nombre",
-      proveedor: s.proveedor || "",
-      linkProveedor: s.linkProveedor || "",
-      ncm: s.ncm || "",
-      precioCompraCNY: s.precioCompraCNY || 0,
-      pesoGramos: s.pesoGramos || 100,
-      costoEnvioUnitarioUSD: s.costoEnvioUnitarioUSD || 0,
-      precioVentaML: s.precioVentaML || s.precio || 0,
-      margen: s.margen || 0,
-      gananciaNetaARS: s.gananciaNetaARS || 0,
-      rentable: s.rentable || false,
-      fechaCreacion: s.fechaCreacion || s.fecha || new Date().toISOString(),
-      fechaActualizacion: s.fechaActualizacion || s.fecha || new Date().toISOString(),
-      notas: s.notas || "",
-    }));
-  } catch {
-    return [];
-  }
-}
 
 export function getAllSkus(): SkuData[] {
   if (typeof window === "undefined") return [];
@@ -85,6 +47,23 @@ export function getAllSkus(): SkuData[] {
     return [];
   }
 }
+
+export function saveSku(sku: SkuData): void {
+  if (typeof window === "undefined") return;
+  try {
+    const all = getAllSkus();
+    const idx = all.findIndex(s => s.id === sku.id);
+    if (idx >= 0) {
+      all[idx] = { ...sku, fechaActualizacion: new Date().toISOString() };
+    } else {
+      all.push({ ...sku, fechaCreacion: new Date().toISOString(), fechaActualizacion: new Date().toISOString() });
+    }
+    localStorage.setItem(DB_KEY, JSON.stringify(all));
+  } catch (e) {
+    console.error("Error saving SKU:", e);
+  }
+}
+
 export function deleteSku(id: string): void {
   if (typeof window === "undefined") return;
   try {
