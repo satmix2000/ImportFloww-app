@@ -63,7 +63,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       fobAdjustmentUSD: 0,
       exchangeRate: 0.138,
       weight: 0,
-      shippingCostPerKg: 13.00,
+      shippingCostPerKg: 11.20,
       customsFreightPercentage: 10.7,
       miscellaneous: 0,
       productDescription: "",
