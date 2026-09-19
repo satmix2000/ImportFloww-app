@@ -151,8 +151,7 @@ export function calcularSkuRapido(
 
   // Resultado
   const gananciaNetaARS = precioVentaML - comisionPesos - costoFijoML - envioGratisML - costoTotalARS;
-  const margen = (gananciaNetaARS / precioVentaML) * 100;
-
+  const margen = precioVentaML > 0 ? (gananciaNetaARS / precioVentaML) * 100 : 0;
   return {
     costoImportUnitUSD: costoTotalUSD,
     costoImportUnitARS: costoTotalARS,
