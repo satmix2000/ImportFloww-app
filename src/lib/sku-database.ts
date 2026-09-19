@@ -33,7 +33,26 @@ export function getAllSkus(): SkuData[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(DB_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    // Migrar SKUs viejos al formato nuevo
+    return parsed.map((s: any) => ({
+      id: s.id || "",
+      nombre: s.nombre || s.id || "Sin nombre",
+      proveedor: s.proveedor || "",
+      linkProveedor: s.linkProveedor || "",
+      ncm: s.ncm || "",
+      precioCompraCNY: s.precioCompraCNY || 0,
+      pesoGramos: s.pesoGramos || 100,
+      costoEnvioUnitarioUSD: s.costoEnvioUnitarioUSD || 0,
+      precioVentaML: s.precioVentaML || s.precio || 0,
+      margen: s.margen || 0,
+      gananciaNetaARS: s.gananciaNetaARS || 0,
+      rentable: s.rentable || false,
+      fechaCreacion: s.fechaCreacion || s.fecha || new Date().toISOString(),
+      fechaActualizacion: s.fechaActualizacion || s.fecha || new Date().toISOString(),
+      notas: s.notas || "",
+    }));
   } catch {
     return [];
   }
