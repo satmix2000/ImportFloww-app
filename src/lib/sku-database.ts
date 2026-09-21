@@ -16,6 +16,9 @@ export interface SkuData {
   fechaCreacion: string;
   fechaActualizacion: string;
   notas: string;
+  tariffRate: number;
+  statisticalFee: number;
+  vatRate: number;
 }
 
 const DB_KEY = "importflow-skus-db";
@@ -42,12 +45,14 @@ export function getAllSkus(): SkuData[] {
       fechaCreacion: s.fechaCreacion || s.fecha || new Date().toISOString(),
       fechaActualizacion: s.fechaActualizacion || s.fecha || new Date().toISOString(),
       notas: s.notas || "",
+      tariffRate: s.tariffRate ?? 18,
+      statisticalFee: s.statisticalFee ?? 3,
+      vatRate: s.vatRate ?? 21,
     }));
   } catch {
     return [];
   }
 }
-
 export function saveSku(sku: SkuData): void {
   if (typeof window === "undefined") return;
   try {
