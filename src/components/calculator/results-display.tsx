@@ -102,6 +102,9 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
       fechaCreacion: existente?.fechaCreacion || new Date().toISOString(),
       fechaActualizacion: new Date().toISOString(),
       notas: existente?.notas || "",
+        tariffRate: existente?.tariffRate ?? formData.tariffRate ?? 18,
+  statisticalFee: existente?.statisticalFee ?? formData.statisticalFee ?? 3,
+  vatRate: existente?.vatRate ?? formData.vatRate ?? 21,
     };
 
     saveSku(skuData);
