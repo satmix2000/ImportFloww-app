@@ -12,9 +12,6 @@ const SHIPPING_COST_PER_KG = 11.2;
 
 export default function SkusPage() {
   const [skus, setSkus] = useState<SkuData[]>([]);
-</details>
-
-<SkuData[]>([]);
   const [search, setSearch] = useState("");
   const [editingSku, setEditingSku] = useState<SkuData | null>(null);
   const [usdToArs, setUsdToArs] = useState(1550);
