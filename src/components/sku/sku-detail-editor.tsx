@@ -26,7 +26,7 @@ export function SkuDetailEditor({
   onDelete,
   onClose,
 }: SkuDetailEditorProps) {
-  const [sku, setSku] = useState
+  const [sku, setSku] = useState<SkuData>(initialSku);
 </details>
 
 <SkuData>(initialSku);
