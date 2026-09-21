@@ -11,7 +11,7 @@ const EXCHANGE_RATE = 0.14;
 const SHIPPING_COST_PER_KG = 11.2;
 
 export default function SkusPage() {
-  const [skus, setSkus] = useState
+  const [skus, setSkus] = useState<SkuData[]>([]);
 </details>
 
 <SkuData[]>([]);
