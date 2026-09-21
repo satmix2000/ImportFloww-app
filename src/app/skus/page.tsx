@@ -35,6 +35,7 @@ export default function SkusPage() {
     s.ncm.includes(search) ||
     s.proveedor.toLowerCase().includes(search.toLowerCase())
   );
+
   const recalcularTodos = () => {
     const actualizados = skus.map(sku => {
       const calc = calcularSkuRapido(
@@ -87,7 +88,8 @@ export default function SkusPage() {
   const margenPromedio = skus.length > 0
     ? (skus.reduce((acc, s) => acc + s.margen, 0) / skus.length).toFixed(1)
     : "0";
-   return (
+
+  return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -140,23 +142,14 @@ export default function SkusPage() {
 
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, NCM o proveedor..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
+          <input type="text" placeholder="Buscar por nombre, NCM o proveedor..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
         </div>
-         {filtered.length === 0 ? (
+
+        {filtered.length === 0 ? (
           <div className="text-center py-20">
             <Package className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <h3 className="font-bold text-slate-400">
-              {skus.length === 0 ? "No hay SKUs guardados" : "Sin resultados"}
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              {skus.length === 0 ? "Usá la calculadora para guardar tu primer SKU" : "Probá con otra búsqueda"}
-            </p>
+            <h3 className="font-bold text-slate-400">{skus.length === 0 ? "No hay SKUs guardados" : "Sin resultados"}</h3>
+            <p className="text-xs text-slate-400 mt-1">{skus.length === 0 ? "Usá la calculadora para guardar tu primer SKU" : "Probá con otra búsqueda"}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -173,25 +166,13 @@ export default function SkusPage() {
                 sku.vatRate,
               );
               return (
-                <div
-                  key={sku.id}
-                  className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => setEditingSku(sku)}
-                >
+                <div key={sku.id} className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => setEditingSku(sku)}>
                   <div className="p-4 flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-sm text-slate-900 truncate">{sku.nombre}</h3>
-                        {sku.ncm && (
-                          <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">
-                            {sku.ncm}
-                          </span>
-                        )}
-                        {sku.pesoGramos > 0 && (
-                          <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">
-                            {sku.pesoGramos}g
-                          </span>
-                        )}
+                        {sku.ncm && <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">{sku.ncm}</span>}
+                        {sku.pesoGramos > 0 && <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono text-slate-500 shrink-0">{sku.pesoGramos}g</span>}
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-slate-400">
                         {sku.proveedor && <span>{sku.proveedor}</span>}
@@ -200,39 +181,18 @@ export default function SkusPage() {
                         <span>ML {formatARS(sku.precioVentaML)}</span>
                       </div>
                     </div>
-                       <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right">
-                        <p className={`text-xl font-black ${calc.rentable ? "text-emerald-600" : "text-amber-600"}`}>
-                          {calc.margen}%
-                        </p>
+                        <p className={`text-xl font-black ${calc.rentable ? "text-emerald-600" : "text-amber-600"}`}>{calc.margen}%</p>
                         <p className="text-[10px] text-slate-400 font-mono">{formatARS(calc.gananciaNetaARS)}</p>
                       </div>
-                      {calc.rentable ? (
-                        <TrendingUp className="w-5 h-5 text-emerald-500" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 text-amber-500" />
-                      )}
+                      {calc.rentable ? <TrendingUp className="w-5 h-5 text-emerald-500" /> : <TrendingDown className="w-5 h-5 text-amber-500" />}
                       {sku.linkProveedor && (
-                        <a
-                          href={sku.linkProveedor}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 hover:bg-slate-100 rounded transition-colors"
-                        >
+                        <a href={sku.linkProveedor} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 hover:bg-slate-100 rounded transition-colors">
                           <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                         </a>
                       )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Eliminar "${sku.nombre}"?`)) {
-                            deleteSku(sku.id);
-                            reloadSkus();
-                          }
-                        }}
-                        className="p-1.5 hover:bg-red-50 rounded transition-colors"
-                      >
+                      <button onClick={(e) => { e.stopPropagation(); if (confirm(`Eliminar "${sku.nombre}"?`)) { deleteSku(sku.id); reloadSkus(); } }} className="p-1.5 hover:bg-red-50 rounded transition-colors">
                         <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />
                       </button>
                     </div>
@@ -243,20 +203,15 @@ export default function SkusPage() {
           </div>
         )}
       </main>
-       {editingSku && (
+
+      {editingSku && (
         <SkuDetailEditor
           sku={editingSku}
           exchangeRate={EXCHANGE_RATE}
           usdToArsRate={usdToArs}
           shippingCostPerKg={SHIPPING_COST_PER_KG}
-          onSave={() => {
-            setEditingSku(null);
-            reloadSkus();
-          }}
-          onDelete={() => {
-            setEditingSku(null);
-            reloadSkus();
-          }}
+          onSave={() => { setEditingSku(null); reloadSkus(); }}
+          onDelete={() => { setEditingSku(null); reloadSkus(); }}
           onClose={() => setEditingSku(null)}
         />
       )}
