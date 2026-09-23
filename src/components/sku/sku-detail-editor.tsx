@@ -31,11 +31,11 @@ export function SkuDetailEditor({
 
   const calc = calcularSkuRapido(
     sku.precioCompraCNY,
-    exchangeRate,
+    sku.exchangeRate,
     sku.pesoGramos,
     shippingCostPerKg,
     sku.precioVentaML,
-    usdToArsRate,
+    sku.usdToArsRate,
     sku.tariffRate,
     sku.statisticalFee,
     sku.vatRate,
