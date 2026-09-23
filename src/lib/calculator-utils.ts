@@ -115,6 +115,46 @@ export function calcularSkuRapido(
   const mlConfig = getMLConfig();
   const comisionPorcentaje = mlConfig.comisionPorcentaje;
 
+  const breakdown = calculateImportBreakdown({
+    itemValueCNY: precioCompraCNY,
+    exchangeRate,
+    weight: pesoGramos,
+    shippingCostPerKg,
+    miscellaneous: 0,
+    tariffRate,
+    statisticalFee,
+    vatRate,
+    usdToArsRate,
+    fobAdjustmentUSD: 0,
+    customsFreightPercentage: 10.7,
+  });
+
+  const costoTotalUSD = breakdown.totalAcquisitionCostUSD;
+  const costoTotalARS = breakdown.totalAcquisitionCostARS;
+
+  const comisionPesos = precioVentaML * (comisionPorcentaje / 100);
+  const rangoFijo = mlConfig.costosFijos.find(r => precioVentaML <= r.hasta);
+  const costoFijoML = rangoFijo?.costo || 0;
+  const rangoEnvio = mlConfig.envioGratis.find(
+    r => precioVentaML >= r.desde && precioVentaML <= r.hasta
+  );
+  const envioGratisML = rangoEnvio?.costo || 0;
+
+  const gananciaNetaARS = precioVentaML - comisionPesos - costoFijoML - envioGratisML - costoTotalARS;
+  const margen = precioVentaML > 0 ? (gananciaNetaARS / precioVentaML) * 100 : 0;
+
+  return {
+    costoImportUnitUSD: costoTotalUSD,
+    costoImportUnitARS: costoTotalARS,
+    comisionML: comisionPesos,
+    costoFijoML,
+    envioGratisML,
+    gananciaBrutaARS: precioVentaML - comisionPesos - costoFijoML - envioGratisML,
+    gananciaNetaARS,
+    margen: Number(margen.toFixed(2)),
+    rentable: margen >= 30,
+  };
+}
   // Costo FOB
   const fobUSD = precioCompraCNY * exchangeRate;
 
