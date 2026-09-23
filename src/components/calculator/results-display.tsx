@@ -91,7 +91,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
       nombre: skuName.trim(),
       proveedor: existente?.proveedor || "",
       linkProveedor: existente?.linkProveedor || "",
-      ncm: formData.ncmCode || existente?.ncm || "",
+      ncm: formData.hsCode || existente?.ncm || "",
       precioCompraCNY: formData.itemValueCNY || existente?.precioCompraCNY || 0,
       pesoGramos: formData.weight || existente?.pesoGramos || 100,
       costoEnvioUnitarioUSD: existente?.costoEnvioUnitarioUSD || 0,
