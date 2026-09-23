@@ -19,6 +19,8 @@ export interface SkuData {
   tariffRate: number;
   statisticalFee: number;
   vatRate: number;
+  exchangeRate: number;
+  usdToArsRate: number;
 }
 
 const DB_KEY = "importflow-skus-db";
@@ -45,6 +47,8 @@ export function getAllSkus(): SkuData[] {
       fechaCreacion: s.fechaCreacion || s.fecha || new Date().toISOString(),
       fechaActualizacion: s.fechaActualizacion || s.fecha || new Date().toISOString(),
       notas: s.notas || "",
+      exchangeRate: s.exchangeRate ?? 0.14,
+      usdToArsRate: s.usdToArsRate ?? 1550,
       tariffRate: s.tariffRate ?? 18,
       statisticalFee: s.statisticalFee ?? 3,
       vatRate: s.vatRate ?? 21,
