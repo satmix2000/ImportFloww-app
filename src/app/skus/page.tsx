@@ -40,11 +40,11 @@ export default function SkusPage() {
     const actualizados = skus.map(sku => {
       const calc = calcularSkuRapido(
         sku.precioCompraCNY,
-        EXCHANGE_RATE,
+        sku.exchangeRate,
         sku.pesoGramos,
         SHIPPING_COST_PER_KG,
         sku.precioVentaML,
-        usdToArs,
+        sku.usdToArsRate,
         sku.tariffRate,
         sku.statisticalFee,
         sku.vatRate,
