@@ -80,6 +80,8 @@ export default function SkusPage() {
       tariffRate: 18,
       statisticalFee: 3,
       vatRate: 21,
+      exchangeRate: 0.14,
+      usdToArsRate: 1550,
     };
     setEditingSku(newSku);
   };
