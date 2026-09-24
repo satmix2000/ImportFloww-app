@@ -190,6 +190,7 @@ export default function Home() {
     <span className="text-slate-900 border-b-2 border-orange-500 pb-0.5">Calculadora</span>
     <a href="/ncm" className="hover:text-slate-900 transition-colors">Codigos NCM</a>
     <a href="/skus" className="hover:text-slate-900 transition-colors">Base SKUs</a>
+    <a href="/orders" className="hover:text-slate-900 transition-colors">Ordenes</a> 
 </nav>
         </div>
       </header>
