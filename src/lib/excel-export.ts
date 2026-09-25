@@ -39,6 +39,7 @@ export function exportOrderToExcel(order: OrderData) {
   const costoARS = getOrderCostARS(order);
   const totalUnidades = order.items.reduce((a, i) => a + i.cantidad, 0);
 
+  const firstSku = skus.find(s => s.id === order.items[0]?.skuId);
   const resumenRows: string[] = [
     row(cell("ORDEN DE COMPRA - IMPORTFLOW", "Title")),
     row(),
@@ -48,8 +49,8 @@ export function exportOrderToExcel(order: OrderData) {
     row(cell("Fecha", "Label"), cell(new Date(order.fechaCreacion).toLocaleDateString("es-AR"))),
     row(),
     row(cell("CONDICIONES", "Section")),
-    row(cell("Tasa CNY/USD", "Label"), cell(order.exchangeRate, "Decimal4")),
-    row(cell("Tasa USD/ARS", "Label"), cell(order.usdToArsRate, "Decimal4")),
+    row(cell("Tasa CNY/USD", "Label"), cell(firstSku?.exchangeRate ?? order.exchangeRate, "Decimal4")),
+    row(cell("Tasa USD/ARS", "Label"), cell(firstSku?.usdToArsRate ?? order.usdToArsRate, "Decimal4")),
     row(cell("Peso Objetivo (kg)", "Label"), cell(+(order.pesoObjetivoGramos / 1000).toFixed(2))),
     row(cell("Flete x KG (USD)", "Label"), cell(SHIPPING_COST_PER_KG)),
     row(),
