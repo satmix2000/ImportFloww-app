@@ -64,7 +64,7 @@ export function OrderEditor({ order: initialOrder, onSave, onDelete, onClose }: 
     if (existing) {
       updateItemCantidad(sku.id, existing.cantidad + 1);
     } else {
-      const newItem: OrderItem = {
+            const newItem: OrderItem = {
         skuId: sku.id,
         nombre: sku.nombre,
         ncm: sku.ncm,
@@ -76,6 +76,8 @@ export function OrderEditor({ order: initialOrder, onSave, onDelete, onClose }: 
         tariffRate: sku.tariffRate,
         statisticalFee: sku.statisticalFee,
         vatRate: sku.vatRate,
+        exchangeRate: sku.exchangeRate,
+        usdToArsRate: sku.usdToArsRate,
       };
       setOrder(prev => ({ ...prev, items: [...prev.items, newItem] }));
     }
