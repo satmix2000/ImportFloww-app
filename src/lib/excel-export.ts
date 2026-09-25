@@ -100,46 +100,34 @@ export function exportOrderToExcel(order: OrderData) {
   let totalGanancia = 0;
 
   const detalleRows = order.items.map((item, idx) => {
-    const breakdown = calculateImportBreakdown({
+    const sku = skus.find(s => s.id === item.skuId);
+    const precioVentaML = sku?.precioVentaML || 0;
+    const itemExchangeRate = sku?.exchangeRate ?? order.exchangeRate;
+    const itemUsdToArsRate = sku?.usdToArsRate ?? order.usdToArsRate;
+
+    const bd = calculateImportBreakdown({
       itemValueCNY: item.precioCompraCNY,
-      exchangeRate: order.exchangeRate,
+      exchangeRate: itemExchangeRate,
       weight: item.pesoGramos,
       shippingCostPerKg: SHIPPING_COST_PER_KG,
       miscellaneous: 0,
       tariffRate: item.tariffRate,
       statisticalFee: item.statisticalFee,
       vatRate: item.vatRate,
-      usdToArsRate: order.usdToArsRate,
+      usdToArsRate: itemUsdToArsRate,
     });
 
-   const sku = skus.find(s => s.id === item.skuId);
-const precioVentaML = sku?.precioVentaML || 0;
-const itemExchangeRate = sku?.exchangeRate ?? order.exchangeRate;
-const itemUsdToArsRate = sku?.usdToArsRate ?? order.usdToArsRate;
-
-const breakdown = calculateImportBreakdown({
-  itemValueCNY: item.precioCompraCNY,
-  exchangeRate: itemExchangeRate,
-  weight: item.pesoGramos,
-  shippingCostPerKg: SHIPPING_COST_PER_KG,
-  miscellaneous: 0,
-  tariffRate: item.tariffRate,
-  statisticalFee: item.statisticalFee,
-  vatRate: item.vatRate,
-  usdToArsRate: itemUsdToArsRate,
-});
-
-const calc = calcularSkuRapido(
-  item.precioCompraCNY,
-  itemExchangeRate,
-  item.pesoGramos,
-  SHIPPING_COST_PER_KG,
-  precioVentaML,
-  itemUsdToArsRate,
-  item.tariffRate,
-  item.statisticalFee,
-  item.vatRate,
-);
+    const calc = calcularSkuRapido(
+      item.precioCompraCNY,
+      itemExchangeRate,
+      item.pesoGramos,
+      SHIPPING_COST_PER_KG,
+      precioVentaML,
+      itemUsdToArsRate,
+      item.tariffRate,
+      item.statisticalFee,
+      item.vatRate,
+    );
 
     const gananciaTotal = calc.gananciaNetaARS * item.cantidad;
     totalGanancia += gananciaTotal;
@@ -153,20 +141,20 @@ const calc = calcularSkuRapido(
       cell(item.pesoGramos),
       cell(+(item.precioCompraCNY * item.cantidad).toFixed(2)),
       cell(item.pesoGramos * item.cantidad),
-      cell(+breakdown.itemValueUSD.toFixed(2)),
-      cell(+breakdown.baseShipping.toFixed(2)),
-      cell(+breakdown.insurance.toFixed(2)),
-      cell(+breakdown.dhlHandlingFee.toFixed(2)),
-      cell(+breakdown.totalLogisticsUSD.toFixed(2)),
-      cell(+breakdown.customsFreight.toFixed(2)),
-      cell(+breakdown.cifValue.toFixed(2)),
-      cell(+breakdown.dutyAmount.toFixed(2)),
-      cell(+breakdown.statisticalAmount.toFixed(2)),
-      cell(+breakdown.vatAmount.toFixed(2)),
-      cell(+breakdown.totalTaxesUSD.toFixed(2)),
-      cell(+breakdown.totalAcquisitionCostUSD.toFixed(2)),
-      cell(+breakdown.totalAcquisitionCostARS.toFixed(2)),
-      cell(+(breakdown.totalAcquisitionCostARS * item.cantidad).toFixed(2)),
+      cell(+bd.itemValueUSD.toFixed(2)),
+      cell(+bd.baseShipping.toFixed(2)),
+      cell(+bd.insurance.toFixed(2)),
+      cell(+bd.dhlHandlingFee.toFixed(2)),
+      cell(+bd.totalLogisticsUSD.toFixed(2)),
+      cell(+bd.customsFreight.toFixed(2)),
+      cell(+bd.cifValue.toFixed(2)),
+      cell(+bd.dutyAmount.toFixed(2)),
+      cell(+bd.statisticalAmount.toFixed(2)),
+      cell(+bd.vatAmount.toFixed(2)),
+      cell(+bd.totalTaxesUSD.toFixed(2)),
+      cell(+bd.totalAcquisitionCostUSD.toFixed(2)),
+      cell(+bd.totalAcquisitionCostARS.toFixed(2)),
+      cell(+(bd.totalAcquisitionCostARS * item.cantidad).toFixed(2)),
       cell(precioVentaML),
       cell(+calc.comisionML.toFixed(2)),
       cell(+calc.costoFijoML.toFixed(2)),
