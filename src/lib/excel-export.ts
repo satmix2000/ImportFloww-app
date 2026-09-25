@@ -48,8 +48,8 @@ export function exportOrderToExcel(order: OrderData) {
     row(cell("Fecha", "Label"), cell(new Date(order.fechaCreacion).toLocaleDateString("es-AR"))),
     row(),
     row(cell("CONDICIONES", "Section")),
-    row(cell("Tasa CNY/USD", "Label"), cell(order.exchangeRate)),
-    row(cell("Tasa USD/ARS", "Label"), cell(order.usdToArsRate)),
+    row(cell("Tasa CNY/USD", "Label"), cell(order.exchangeRate, "Decimal4")),
+    row(cell("Tasa USD/ARS", "Label"), cell(order.usdToArsRate, "Decimal4")),
     row(cell("Peso Objetivo (kg)", "Label"), cell(+(order.pesoObjetivoGramos / 1000).toFixed(2))),
     row(cell("Flete x KG (USD)", "Label"), cell(SHIPPING_COST_PER_KG)),
     row(),
@@ -133,36 +133,36 @@ export function exportOrderToExcel(order: OrderData) {
     totalGanancia += gananciaTotal;
 
     return row(
-      cell(idx + 1),
-      cell(item.nombre),
-      cell(item.ncm || "-"),
-      cell(item.cantidad),
-      cell(item.precioCompraCNY),
-      cell(item.pesoGramos),
-      cell(+(item.precioCompraCNY * item.cantidad).toFixed(2)),
-      cell(item.pesoGramos * item.cantidad),
-      cell(+bd.itemValueUSD.toFixed(2)),
-      cell(+bd.baseShipping.toFixed(2)),
-      cell(+bd.insurance.toFixed(2)),
-      cell(+bd.dhlHandlingFee.toFixed(2)),
-      cell(+bd.totalLogisticsUSD.toFixed(2)),
-      cell(+bd.customsFreight.toFixed(2)),
-      cell(+bd.cifValue.toFixed(2)),
-      cell(+bd.dutyAmount.toFixed(2)),
-      cell(+bd.statisticalAmount.toFixed(2)),
-      cell(+bd.vatAmount.toFixed(2)),
-      cell(+bd.totalTaxesUSD.toFixed(2)),
-      cell(+bd.totalAcquisitionCostUSD.toFixed(2)),
-      cell(+bd.totalAcquisitionCostARS.toFixed(2)),
-      cell(+(bd.totalAcquisitionCostARS * item.cantidad).toFixed(2)),
-      cell(precioVentaML),
-      cell(+calc.comisionML.toFixed(2)),
-      cell(+calc.costoFijoML.toFixed(2)),
-      cell(+calc.envioGratisML.toFixed(2)),
-      cell(+calc.gananciaNetaARS.toFixed(2)),
-      cell(calc.margen),
-      cell(+gananciaTotal.toFixed(2)),
-    );
+  cell(idx + 1),
+  cell(item.nombre),
+  cell(item.ncm || "-"),
+  cell(item.cantidad),
+  cell(item.precioCompraCNY, "Decimal2"),
+  cell(item.pesoGramos),
+  cell(+(item.precioCompraCNY * item.cantidad).toFixed(2), "Decimal2"),
+  cell(item.pesoGramos * item.cantidad),
+  cell(+bd.itemValueUSD.toFixed(2), "Decimal2"),
+  cell(+bd.baseShipping.toFixed(2), "Decimal2"),
+  cell(+bd.insurance.toFixed(2), "Decimal2"),
+  cell(+bd.dhlHandlingFee.toFixed(2), "Decimal2"),
+  cell(+bd.totalLogisticsUSD.toFixed(2), "Decimal2"),
+  cell(+bd.customsFreight.toFixed(2), "Decimal2"),
+  cell(+bd.cifValue.toFixed(2), "Decimal2"),
+  cell(+bd.dutyAmount.toFixed(2), "Decimal2"),
+  cell(+bd.statisticalAmount.toFixed(2), "Decimal2"),
+  cell(+bd.vatAmount.toFixed(2), "Decimal2"),
+  cell(+bd.totalTaxesUSD.toFixed(2), "Decimal2"),
+  cell(+bd.totalAcquisitionCostUSD.toFixed(2), "Decimal2"),
+  cell(+bd.totalAcquisitionCostARS.toFixed(2), "Decimal2"),
+  cell(+(bd.totalAcquisitionCostARS * item.cantidad).toFixed(2), "Decimal2"),
+  cell(precioVentaML),
+  cell(+calc.comisionML.toFixed(2), "Decimal2"),
+  cell(+calc.costoFijoML.toFixed(2), "Decimal2"),
+  cell(+calc.envioGratisML.toFixed(2), "Decimal2"),
+  cell(+calc.gananciaNetaARS.toFixed(2), "Decimal2"),
+  cell(calc.margen),
+  cell(+gananciaTotal.toFixed(2), "Decimal2"),
+);
   });
 
   const totalRow = row(
@@ -224,6 +224,12 @@ export function exportOrderToExcel(order: OrderData) {
       <Interior ss:Color="#1E293B" ss:Pattern="Solid"/>
       <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     </Style>
+    <Style ss:ID="Decimal4">
+      <NumberFormat ss:Format="0.0000"/>
+    </Style>
+    <Style ss:ID="Decimal2">
+      <NumberFormat ss:Format="0.00"/>
+    </Style>
     <Style ss:ID="Money">
       <NumberFormat ss:Format="Fixed"/>
     </Style>
@@ -234,7 +240,7 @@ export function exportOrderToExcel(order: OrderData) {
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#F59E0B"/>
       </Borders>
     </Style>
-  </Styles>
+</Styles>
 
   <Worksheet ss:Name="Resumen">
     <Table>
