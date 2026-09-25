@@ -12,6 +12,8 @@ export interface OrderItem {
   tariffRate: number;
   statisticalFee: number;
   vatRate: number;
+  exchangeRate: number;
+  usdToArsRate: number;
 }
 
 export interface OrderData {
@@ -40,7 +42,21 @@ export function getAllOrders(): OrderData[] {
       id: o.id || "",
       nombre: o.nombre || "Sin nombre",
       proveedor: o.proveedor || "",
-      items: o.items || [],
+      items: (o.items || []).map((i: any) => ({
+        skuId: i.skuId || "",
+        nombre: i.nombre || "",
+        ncm: i.ncm || "",
+        proveedor: i.proveedor || "",
+        linkProveedor: i.linkProveedor || "",
+        precioCompraCNY: i.precioCompraCNY || 0,
+        pesoGramos: i.pesoGramos || 0,
+        cantidad: i.cantidad || 1,
+        tariffRate: i.tariffRate ?? 18,
+        statisticalFee: i.statisticalFee ?? 3,
+        vatRate: i.vatRate ?? 21,
+        exchangeRate: i.exchangeRate ?? 0.14,
+        usdToArsRate: i.usdToArsRate ?? 1550,
+      })),
       estado: o.estado || "borrador",
       pesoObjetivoGramos: o.pesoObjetivoGramos || 20000,
       exchangeRate: o.exchangeRate ?? 0.14,
@@ -88,7 +104,6 @@ export function makeOrderId(nombre: string): string {
   return nombre.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
-// Helpers de cálculo
 export function getOrderWeightGramos(order: OrderData): number {
   return order.items.reduce((acc, item) => acc + item.pesoGramos * item.cantidad, 0);
 }
@@ -98,9 +113,16 @@ export function getOrderCostCNY(order: OrderData): number {
 }
 
 export function getOrderCostUSD(order: OrderData): number {
-  return getOrderCostCNY(order) * order.exchangeRate;
+  return order.items.reduce((acc, item) => {
+    const rate = item.exchangeRate ?? order.exchangeRate;
+    return acc + item.precioCompraCNY * item.cantidad * rate;
+  }, 0);
 }
 
 export function getOrderCostARS(order: OrderData): number {
-  return getOrderCostUSD(order) * order.usdToArsRate;
+  return order.items.reduce((acc, item) => {
+    const rate = item.exchangeRate ?? order.exchangeRate;
+    const arsRate = item.usdToArsRate ?? order.usdToArsRate;
+    return acc + item.precioCompraCNY * item.cantidad * rate * arsRate;
+  }, 0);
 }
