@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Save, Trash2, X, Search, Plus, Minus, Weight,
-  Download, ShoppingCart, ArrowRight, Package, ExternalLink,
+  Download, ShoppingCart, ArrowRight, Package, ExternalLink, FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +13,7 @@ import {
   getOrderWeightGramos, getOrderCostCNY, getOrderCostUSD, getOrderCostARS,
 } from "@/lib/order-database";
 import { getAllSkus, type SkuData } from "@/lib/sku-database";
+import { exportOrderToExcel } from "@/lib/excel-export";
 
 interface OrderEditorProps {
   order: OrderData;
@@ -216,19 +217,19 @@ export function OrderEditor({ order: initialOrder, onSave, onDelete, onClose }: 
     </div>
     <div class="row">
       <span>Tipo de Cambio USD/ARS</span>
-      <span>$${order.usdToArsRate}</span>
+      <span>$$$${order.usdToArsRate}</span>
     </div>
     <div class="row">
       <span>Costo Total CNY</span>
-      <span><strong>¥{costoCNY.toFixed(2)}</strong></span>
+      <span><strong>¥${costoCNY.toFixed(2)}</strong></span>
     </div>
     <div class="row">
       <span>Costo Total USD</span>
-      <span><strong>$$$${costoUSD.toFixed(2)}</strong></span>
+      <span><strong>$${costoUSD.toFixed(2)}</strong></span>
     </div>
     <div class="row total">
       <span>Costo Total ARS</span>
-      <span>${formatARS(costoARS)}</span>
+      <span>{formatARS(costoARS)}</span>
     </div>
   </div>
 
@@ -574,7 +575,16 @@ export function OrderEditor({ order: initialOrder, onSave, onDelete, onClose }: 
               className="text-xs"
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
-              Exportar PDF
+              PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => exportOrderToExcel(order)}
+              disabled={order.items.length === 0}
+              className="text-xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" />
+              Excel
             </Button>
             <Button variant="outline" onClick={onClose} className="text-xs">Cancelar</Button>
             <Button onClick={handleSave} className="bg-orange-500 hover:bg-orange-600 text-xs">
