@@ -112,20 +112,34 @@ export function exportOrderToExcel(order: OrderData) {
       usdToArsRate: order.usdToArsRate,
     });
 
-    const sku = skus.find(s => s.id === item.skuId);
-    const precioVentaML = sku?.precioVentaML || 0;
+   const sku = skus.find(s => s.id === item.skuId);
+const precioVentaML = sku?.precioVentaML || 0;
+const itemExchangeRate = sku?.exchangeRate ?? order.exchangeRate;
+const itemUsdToArsRate = sku?.usdToArsRate ?? order.usdToArsRate;
 
-    const calc = calcularSkuRapido(
-      item.precioCompraCNY,
-      order.exchangeRate,
-      item.pesoGramos,
-      SHIPPING_COST_PER_KG,
-      precioVentaML,
-      order.usdToArsRate,
-      item.tariffRate,
-      item.statisticalFee,
-      item.vatRate,
-    );
+const breakdown = calculateImportBreakdown({
+  itemValueCNY: item.precioCompraCNY,
+  exchangeRate: itemExchangeRate,
+  weight: item.pesoGramos,
+  shippingCostPerKg: SHIPPING_COST_PER_KG,
+  miscellaneous: 0,
+  tariffRate: item.tariffRate,
+  statisticalFee: item.statisticalFee,
+  vatRate: item.vatRate,
+  usdToArsRate: itemUsdToArsRate,
+});
+
+const calc = calcularSkuRapido(
+  item.precioCompraCNY,
+  itemExchangeRate,
+  item.pesoGramos,
+  SHIPPING_COST_PER_KG,
+  precioVentaML,
+  itemUsdToArsRate,
+  item.tariffRate,
+  item.statisticalFee,
+  item.vatRate,
+);
 
     const gananciaTotal = calc.gananciaNetaARS * item.cantidad;
     totalGanancia += gananciaTotal;
