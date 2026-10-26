@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { suggestNcmFromGemini, type NcmSuggestion } from "@/actions/suggest-ncm";
+import { suggestHsCode, type HsCodeSuggestionOutput } from "@/ai/flows/hs-code-suggestion";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculator-utils";
 import { saveNcmEntry, initializeNcmDatabaseOnce, searchNcm, type NcmEntry } from "@/lib/ncm-database";
@@ -51,7 +51,7 @@ interface ImportFormProps {
 export function ImportForm({ onCalculate }: ImportFormProps) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isRatesLoading, setIsRatesLoading] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<NcmSuggestion[]>([]);
+  const [aiSuggestions, setAiSuggestions] = useState<HsCodeSuggestionOutput>([]);
   const [showLocalDb, setShowLocalDb] = useState(false);
   const [localDbQuery, setLocalDbQuery] = useState("");
   const [localDbResults, setLocalDbResults] = useState<NcmEntry[]>([]);
@@ -137,11 +137,10 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     if (!description || description.length < 5) return;
     setIsAiLoading(true);
     try {
-      const suggestions = await suggestNcmFromGemini(description);
+      const suggestions = await suggestHsCode({ productDescription: description });
       setAiSuggestions(suggestions);
     } catch (error) {
       console.error("AI Error:", error);
-      alert("Error al consultar IA. Verifica que GEMINI_API_KEY esté configurada.");
     } finally {
       setIsAiLoading(false);
     }
