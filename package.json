@@ -49,15 +49,9 @@
     "@hookform/resolvers": "^3.3.4",
     "lucide-react": "^0.378.0",
     "dotenv": "^16.4.5",
-    "genkit": "latest",
     "tailwindcss-animate": "^1.0.7",
-  "autoprefixer": "^10.4.19",
-  "postcss": "^8.4.38",
-  "@genkit-ai/google-genai": "latest",
-    "@genkit-ai/ai": "latest",
-    "@opentelemetry/exporter-jaeger": "latest",
-    "@opentelemetry/exporter-zipkin": "latest",
-    "@opentelemetry/sdk-node": "latest"
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38"
   },
   "devDependencies": {
     "typescript": "^5",
