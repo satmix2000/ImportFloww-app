@@ -204,7 +204,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                         }}
                         className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-primary/10"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <RefreshCcw className="w-3.5 h-3.5" />
                         <span>Ajustar -30%</span>
                       </button>
                     </div>
