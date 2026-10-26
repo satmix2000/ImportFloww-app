@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calculator, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink, ShoppingBag, Database, Search } from "lucide-react";
+import { Calculator, Sparkles, RefreshCcw, Package, Truck, Landmark, Loader2, ExternalLink, ShoppingBag, Database, Search } from "lucide-react";
 
 import {
   Form,
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { suggestNcmFromGemini, type NcmSuggestion } from "@/actions/suggest-ncm";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculator-utils";
 import { saveNcmEntry, initializeNcmDatabaseOnce, searchNcm, type NcmEntry } from "@/lib/ncm-database";
@@ -48,7 +49,9 @@ interface ImportFormProps {
 }
 
 export function ImportForm({ onCalculate }: ImportFormProps) {
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [isRatesLoading, setIsRatesLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<NcmSuggestion[]>([]);
   const [showLocalDb, setShowLocalDb] = useState(false);
   const [localDbQuery, setLocalDbQuery] = useState("");
   const [localDbResults, setLocalDbResults] = useState<NcmEntry[]>([]);
@@ -127,6 +130,21 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
   const handleFormSubmit = (data: ImportFormData) => {
     const metricasML = calcularMetricasMLInterno(data.precioCompetenciaML, data.comisionMLPorcentaje);
     onCalculate({ ...data, metricasML });
+  };
+
+  const handleAiAssist = async () => {
+    const description = form.getValues("productDescription");
+    if (!description || description.length < 5) return;
+    setIsAiLoading(true);
+    try {
+      const suggestions = await suggestNcmFromGemini(description);
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      console.error("AI Error:", error);
+      alert("Error al consultar IA. Verifica que GEMINI_API_KEY esté configurada.");
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   // Buscar en base local
@@ -373,10 +391,16 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center mb-1">
                       <FormLabel>Descripcion del Producto</FormLabel>
-                      <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-primary text-primary font-bold" onClick={() => setShowLocalDb(!showLocalDb)}>
-                        <Database className="w-3 h-3" />
-                        BASE LOCAL
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-primary text-primary font-bold" onClick={() => setShowLocalDb(!showLocalDb)}>
+                          <Database className="w-3 h-3" />
+                          BASE LOCAL
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] gap-1 border-accent text-accent-foreground font-bold" onClick={handleAiAssist} disabled={isAiLoading}>
+                          <Sparkles className="w-3 h-3" />
+                          {isAiLoading ? "Consultando..." : "ASISTENTE IA"}
+                        </Button>
+                      </div>
                     </div>
                     <FormControl><Input placeholder="Ej. Sensor de proximidad..." {...field} /></FormControl>
                     <FormMessage />
@@ -428,6 +452,24 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                     <ExternalLink className="w-2.5 h-2.5" />
                     Ver catalogo completo
                   </a>
+                </div>
+              )}
+
+              {/* Sugerencias de IA */}
+              {aiSuggestions.length > 0 && (
+                <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 space-y-3">
+                  <p className="text-[10px] font-bold text-blue-800 uppercase">Sugerencias IA:</p>
+                  <div className="flex flex-col gap-2">
+                    {aiSuggestions.map((s, i) => (
+                      <Badge key={i} variant="secondary" className="cursor-pointer hover:bg-blue-100 p-3 text-left flex flex-col items-start w-full bg-white border-blue-200" onClick={() => selectSuggestion(s)}>
+                        <div className="flex justify-between w-full border-b border-blue-50 pb-1 mb-1">
+                          <span className="font-bold text-sm text-slate-800">{s.hsCode}</span>
+                          <span className="font-bold text-primary">DIE: {s.suggestedTariffRate}%</span>
+                        </div>
+                        {s.reasoning && <p className="text-[10px] text-slate-500 italic leading-tight">{s.reasoning}</p>}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
