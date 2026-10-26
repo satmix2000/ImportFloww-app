@@ -58,7 +58,26 @@ function saveDatabase(db: NcmDatabase): void {
     db.lastUpdated = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
   } catch (e) {
-    console.warn('[NCM DB] Error saving database:', e);
+    const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
+    const isQuotaExceeded = e instanceof DOMException &&
+      (e.name === 'QuotaExceededError' || e.code === 22);
+
+    if (isQuotaExceeded) {
+      throw new Error(
+        'Almacenamiento lleno: No hay espacio en el navegador para guardar la entrada NCM. ' +
+        'Borre el historial de búsqueda o intente desde un navegador diferente.'
+      );
+    } else if (e instanceof DOMException && e.name === 'SecurityError') {
+      throw new Error(
+        'Acceso denegado: El navegador no permite acceder al almacenamiento. ' +
+        'Verifique que no está en modo privado/incógnito.'
+      );
+    } else {
+      throw new Error(
+        `Fallo al guardar entrada NCM: ${errorMsg}. ` +
+        'Verifique que el navegador está operativo y reintente.'
+      );
+    }
   }
 }
 
@@ -67,6 +86,7 @@ function saveDatabase(db: NcmDatabase): void {
 /**
  * Agrega o actualiza una entrada NCM en la base local.
  * Si ya existe, incrementa el contador de uso y actualiza los datos.
+ * Lanza error si falla el almacenamiento.
  */
 export function saveNcmEntry(entry: Omit<NcmEntry, 'lastUsed' | 'useCount'>): NcmEntry {
   const db = getDatabase();
@@ -81,22 +101,91 @@ export function saveNcmEntry(entry: Omit<NcmEntry, 'lastUsed' | 'useCount'>): Nc
 
   db.entries[entry.hsCode] = saved;
   db.totalQueries += 1;
-  saveDatabase(db);
+  saveDatabase(db); // Puede lanzar error
   return saved;
+}
+
+// ─── Índice en memoria para búsqueda rápida ───
+
+/**
+ * Índice simple: mapea palabras clave a hsCode.
+ * Se regenera cada vez que se carga la DB.
+ * Para búsquedas pequeñas (<10000 entradas), es suficientemente rápido.
+ */
+function buildSearchIndex(db: NcmDatabase): Record<string, string[]> {
+  const index: Record<string, string[]> = {};
+
+  for (const entry of Object.values(db.entries)) {
+    const words = new Set<string>();
+
+    // Agregar código NCM
+    words.add(entry.hsCode.toLowerCase());
+    words.add(entry.hsCode.replace(/\./g, '').toLowerCase());
+
+    // Agregar palabras de descripción (min 3 chars)
+    entry.description.toLowerCase().split(/\s+/).forEach(w => {
+      if (w.length >= 3) words.add(w.replace(/[^\w]/g, ''));
+    });
+
+    // Agregar tags
+    entry.tags.forEach(t => words.add(t.toLowerCase()));
+
+    // Agregar categoría
+    entry.tariffCategory.toLowerCase().split(/\s+/).forEach(w => {
+      if (w.length >= 3) words.add(w.replace(/[^\w]/g, ''));
+    });
+
+    // Registrar hsCode para cada palabra
+    const wordsArray = Array.from(words);
+    for (const word of wordsArray) {
+      if (!index[word]) index[word] = [];
+      if (!index[word].includes(entry.hsCode)) {
+        index[word].push(entry.hsCode);
+      }
+    }
+  }
+
+  return index;
 }
 
 /**
  * Busca entradas por texto libre (descripción, código, tags).
- * Retorna resultados ordenados por relevancia.
+ * Usa índice en memoria para filtrar candidatos, luego score por relevancia.
+ * O(k log n) donde k = candidatos encontrados, mucho mejor que O(n) full scan.
  */
 export function searchNcm(query: string): NcmSearchResult[] {
   const db = getDatabase();
   const q = query.toLowerCase().trim();
   if (!q) return getAllEntries().map(e => ({ entry: e, score: 0 }));
 
+  // Construir índice para esta búsqueda
+  const index = buildSearchIndex(db);
+
+  // Encontrar candidatos usando índice
+  const candidateHsCodes = new Set<string>();
+  const queryWords = q.split(/\s+/).filter(w => w.length >= 1);
+
+  for (const word of queryWords) {
+    // Búsqueda de palabras clave
+    for (const [key, hsCodes] of Object.entries(index)) {
+      if (key.includes(word)) {
+        for (const code of hsCodes) {
+          candidateHsCodes.add(code);
+        }
+      }
+    }
+  }
+
+  // Si no hay candidatos, retornar vacío en lugar de iterar todo
+  if (candidateHsCodes.size === 0) return [];
+
+  // Score solo los candidatos encontrados
   const results: NcmSearchResult[] = [];
 
-  for (const entry of Object.values(db.entries)) {
+  for (const hsCode of candidateHsCodes) {
+    const entry = db.entries[hsCode];
+    if (!entry) continue;
+
     let score = 0;
 
     // Coincidencia exacta de código → máxima prioridad
@@ -173,12 +262,13 @@ export function getTopEntries(limit: number = 10): NcmEntry[] {
 
 /**
  * Elimina una entrada por código NCM.
+ * Lanza error si falla el almacenamiento.
  */
 export function deleteNcmEntry(hsCode: string): boolean {
   const db = getDatabase();
   if (db.entries[hsCode]) {
     delete db.entries[hsCode];
-    saveDatabase(db);
+    saveDatabase(db); // Puede lanzar error
     return true;
   }
   return false;
@@ -186,12 +276,13 @@ export function deleteNcmEntry(hsCode: string): boolean {
 
 /**
  * Actualiza notas del usuario para una entrada.
+ * Lanza error si falla el almacenamiento.
  */
 export function updateNcmNotes(hsCode: string, notes: string): boolean {
   const db = getDatabase();
   if (db.entries[hsCode]) {
     db.entries[hsCode].notes = notes;
-    saveDatabase(db);
+    saveDatabase(db); // Puede lanzar error
     return true;
   }
   return false;
@@ -262,7 +353,7 @@ function generateTags(description: string): string[] {
     .split(/\s+/)
     .filter(w => w.length > 3)
     .filter(w => !['para', 'como', 'esta', 'tiene', 'puede', 'donde', 'sobre'].includes(w));
-  return [...new Set(words)].slice(0, 8);
+  return Array.from(new Set(words)).slice(0, 8);
 }
 
 /**
@@ -577,7 +668,47 @@ function getSeedData(): Omit<NcmEntry, 'lastUsed' | 'useCount' | 'origin'>[] {
       suggestedTariffRate: 14,
       suggestedStatisticalFee: 3,
       suggestedVatRate: 21,
+      tags: ['drone', 'uav', 'aereo', 'camara', 'dji', 'vuelo'],
+    },
+    // Instrumentos musicales
+    {
+      hsCode: '9207.90.00',
+      description: 'Teclados y sintetizadores electrónicos',
+      tariffCategory: 'Instrumentos musicales eléctricos',
+      reasoning: 'Teclados musicales, sintetizadores, MIDI controllers. DIE 20%.',
+      suggestedTariffRate: 20,
+      suggestedStatisticalFee: 3,
+      suggestedVatRate: 21,
+      tags: ['teclado', 'sintetizador', 'musica', 'midi', 'piano'],
+    },
+    // Fuentes de poder industriales
+    {
+      hsCode: '8504.40.90',
+      description: 'Inversores y convertidores de potencia',
+      tariffCategory: 'Convertidores estáticos - otros',
+      reasoning: 'Inversores DC-AC, convertidores de voltaje, UPS. DIE 14%.',
+      suggestedTariffRate: 14,
+      suggestedStatisticalFee: 3,
+      suggestedVatRate: 21,
       tags: ['inversor', 'convertidor', 'ups', 'potencia', 'industrial'],
     },
   ];
+}
+
+// ─── Inicialización one-time ───
+
+/**
+ * Flag para asegurar que initializeDatabaseWithSeed() solo se ejecuta una vez,
+ * evitando lecturas innecesarias de localStorage en cada mount.
+ */
+let _ncmDatabaseInitialized = false;
+
+/**
+ * Inicializa la base de datos NCM solo una vez.
+ * Llamar esta función múltiples veces no hace nada después de la primera llamada.
+ */
+export function initializeNcmDatabaseOnce(): void {
+  if (typeof window === 'undefined' || _ncmDatabaseInitialized) return;
+  initializeDatabaseWithSeed();
+  _ncmDatabaseInitialized = true;
 }

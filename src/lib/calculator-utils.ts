@@ -1,5 +1,8 @@
 import { getMLConfig } from "./ml-constants";
 
+// Constante centralizada: threshold de margen rentable (%)
+export const MARGEN_RENTABLE_THRESHOLD = 30;
+
 export type ImportCosts = {
   itemValueCNY: number;
   exchangeRate: number; // 1 CNY = X USD
@@ -42,6 +45,16 @@ export function calculateImportBreakdown(costs: ImportCosts): ImportBreakdown {
     usdToArsRate, fobAdjustmentUSD = 0,
     customsFreightPercentage = 10.7,
   } = costs;
+
+  // Validación: tasa de cambio no puede ser 0
+  if (usdToArsRate <= 0) {
+    throw new Error('Tasa USD/ARS inválida: debe ser mayor a 0. Verifique la conexión o refresque los datos.');
+  }
+
+  // Validación: tasa de conversión CNY no puede ser 0
+  if (exchangeRate <= 0) {
+    throw new Error('Tasa de cambio CNY/USD inválida: debe ser mayor a 0.');
+  }
 
   // 1. FOB Declarado
   const itemValueUSD = itemValueCNY * exchangeRate;
@@ -100,6 +113,50 @@ export const formatARS = (value: number) => {
   }).format(value);
 };
 
+/**
+ * Calcula métricas de margen y rentabilidad para Mercado Libre.
+ * Lógica centralizada para evitar duplicación.
+ */
+export type MLMetrics = {
+  comisionPesos: number;
+  costoFijoML: number;
+  envioGratisML: number;
+  gananciaNetaARS: number;
+  margenRealPercentage: number;
+  esRentable: boolean;
+};
+
+export function calcularMetricasML(
+  precioVentaML: number,
+  costoTotalARS: number
+): MLMetrics {
+  const mlConfig = getMLConfig();
+  const comisionPorcentaje = mlConfig.comisionPorcentaje;
+
+  const comisionPesos = precioVentaML * (comisionPorcentaje / 100);
+  const rangoFijo = mlConfig.costosFijos.find(r => precioVentaML <= r.hasta);
+  const costoFijoML = rangoFijo?.costo || 0;
+  const rangoEnvio = mlConfig.envioGratis.find(
+    r => precioVentaML >= r.desde && precioVentaML <= r.hasta
+  );
+  const envioGratisML = rangoEnvio?.costo || 0;
+
+  const gananciaNetaARS = precioVentaML - comisionPesos - costoFijoML - envioGratisML - costoTotalARS;
+  const margenRealPercentage = precioVentaML > 0
+    ? (gananciaNetaARS / precioVentaML) * 100
+    : 0;
+  const esRentable = margenRealPercentage >= MARGEN_RENTABLE_THRESHOLD;
+
+  return {
+    comisionPesos,
+    costoFijoML,
+    envioGratisML,
+    gananciaNetaARS,
+    margenRealPercentage: Number(margenRealPercentage.toFixed(2)),
+    esRentable,
+  };
+}
+
 // Cálculo rápido de SKU desde la base
 export function calcularSkuRapido(
   precioCompraCNY: number,
@@ -112,8 +169,14 @@ export function calcularSkuRapido(
   statisticalFee: number = 3,
   vatRate: number = 21,
 ) {
-  const mlConfig = getMLConfig();
-  const comisionPorcentaje = mlConfig.comisionPorcentaje;
+  // Validación: tasa de cambio no puede ser 0
+  if (usdToArsRate <= 0) {
+    throw new Error('Tasa USD/ARS inválida: debe ser mayor a 0. Verifique la conexión o refresque los datos.');
+  }
+
+  if (exchangeRate <= 0) {
+    throw new Error('Tasa de cambio CNY/USD inválida: debe ser mayor a 0.');
+  }
 
   const breakdown = calculateImportBreakdown({
     itemValueCNY: precioCompraCNY,
@@ -129,29 +192,18 @@ export function calcularSkuRapido(
     customsFreightPercentage: 10.7,
   });
 
-  const costoTotalUSD = breakdown.totalAcquisitionCostUSD;
   const costoTotalARS = breakdown.totalAcquisitionCostARS;
-
-  const comisionPesos = precioVentaML * (comisionPorcentaje / 100);
-  const rangoFijo = mlConfig.costosFijos.find(r => precioVentaML <= r.hasta);
-  const costoFijoML = rangoFijo?.costo || 0;
-  const rangoEnvio = mlConfig.envioGratis.find(
-    r => precioVentaML >= r.desde && precioVentaML <= r.hasta
-  );
-  const envioGratisML = rangoEnvio?.costo || 0;
-
-  const gananciaNetaARS = precioVentaML - comisionPesos - costoFijoML - envioGratisML - costoTotalARS;
-  const margen = precioVentaML > 0 ? (gananciaNetaARS / precioVentaML) * 100 : 0;
+  const metricas = calcularMetricasML(precioVentaML, costoTotalARS);
 
   return {
-    costoImportUnitUSD: costoTotalUSD,
+    costoImportUnitUSD: breakdown.totalAcquisitionCostUSD,
     costoImportUnitARS: costoTotalARS,
-    comisionML: comisionPesos,
-    costoFijoML,
-    envioGratisML,
-    gananciaBrutaARS: precioVentaML - comisionPesos - costoFijoML - envioGratisML,
-    gananciaNetaARS,
-    margen: Number(margen.toFixed(2)),
-    rentable: margen >= 30,
+    comisionML: metricas.comisionPesos,
+    costoFijoML: metricas.costoFijoML,
+    envioGratisML: metricas.envioGratisML,
+    gananciaBrutaARS: precioVentaML - metricas.comisionPesos - metricas.costoFijoML - metricas.envioGratisML,
+    gananciaNetaARS: metricas.gananciaNetaARS,
+    margen: metricas.margenRealPercentage,
+    rentable: metricas.esRentable,
   };
 }

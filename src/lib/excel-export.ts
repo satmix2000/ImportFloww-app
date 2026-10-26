@@ -101,69 +101,104 @@ export function exportOrderToExcel(order: OrderData) {
   let totalGanancia = 0;
 
   const detalleRows = order.items.map((item, idx) => {
-    const sku = skus.find(s => s.id === item.skuId);
-    const precioVentaML = sku?.precioVentaML || 0;
-    const itemExchangeRate = sku?.exchangeRate ?? order.exchangeRate;
-    const itemUsdToArsRate = sku?.usdToArsRate ?? order.usdToArsRate;
+    try {
+      const sku = skus.find(s => s.id === item.skuId);
+      const precioVentaML = sku?.precioVentaML || 0;
+      const itemExchangeRate = sku?.exchangeRate ?? order.exchangeRate;
+      const itemUsdToArsRate = sku?.usdToArsRate ?? order.usdToArsRate;
 
-    const bd = calculateImportBreakdown({
-      itemValueCNY: item.precioCompraCNY,
-      exchangeRate: itemExchangeRate,
-      weight: item.pesoGramos,
-      shippingCostPerKg: SHIPPING_COST_PER_KG,
-      miscellaneous: 0,
-      tariffRate: item.tariffRate,
-      statisticalFee: item.statisticalFee,
-      vatRate: item.vatRate,
-      usdToArsRate: itemUsdToArsRate,
-    });
+      const bd = calculateImportBreakdown({
+        itemValueCNY: item.precioCompraCNY,
+        exchangeRate: itemExchangeRate,
+        weight: item.pesoGramos,
+        shippingCostPerKg: SHIPPING_COST_PER_KG,
+        miscellaneous: 0,
+        tariffRate: item.tariffRate,
+        statisticalFee: item.statisticalFee,
+        vatRate: item.vatRate,
+        usdToArsRate: itemUsdToArsRate,
+      });
 
-    const calc = calcularSkuRapido(
-      item.precioCompraCNY,
-      itemExchangeRate,
-      item.pesoGramos,
-      SHIPPING_COST_PER_KG,
-      precioVentaML,
-      itemUsdToArsRate,
-      item.tariffRate,
-      item.statisticalFee,
-      item.vatRate,
-    );
+      const calc = calcularSkuRapido(
+        item.precioCompraCNY,
+        itemExchangeRate,
+        item.pesoGramos,
+        SHIPPING_COST_PER_KG,
+        precioVentaML,
+        itemUsdToArsRate,
+        item.tariffRate,
+        item.statisticalFee,
+        item.vatRate,
+      );
 
-    const gananciaTotal = calc.gananciaNetaARS * item.cantidad;
-    totalGanancia += gananciaTotal;
+      const gananciaTotal = calc.gananciaNetaARS * item.cantidad;
+      totalGanancia += gananciaTotal;
 
-    return row(
-  cell(idx + 1),
-  cell(item.nombre),
-  cell(item.ncm || "-"),
-  cell(item.cantidad),
-  cell(item.precioCompraCNY, "Decimal2"),
-  cell(item.pesoGramos),
-  cell(+(item.precioCompraCNY * item.cantidad).toFixed(2), "Decimal2"),
-  cell(item.pesoGramos * item.cantidad),
-  cell(+bd.itemValueUSD.toFixed(2), "Decimal2"),
-  cell(+bd.baseShipping.toFixed(2), "Decimal2"),
-  cell(+bd.insurance.toFixed(2), "Decimal2"),
-  cell(+bd.dhlHandlingFee.toFixed(2), "Decimal2"),
-  cell(+bd.totalLogisticsUSD.toFixed(2), "Decimal2"),
-  cell(+bd.customsFreight.toFixed(2), "Decimal2"),
-  cell(+bd.cifValue.toFixed(2), "Decimal2"),
-  cell(+bd.dutyAmount.toFixed(2), "Decimal2"),
-  cell(+bd.statisticalAmount.toFixed(2), "Decimal2"),
-  cell(+bd.vatAmount.toFixed(2), "Decimal2"),
-  cell(+bd.totalTaxesUSD.toFixed(2), "Decimal2"),
-  cell(+bd.totalAcquisitionCostUSD.toFixed(2), "Decimal2"),
-  cell(+bd.totalAcquisitionCostARS.toFixed(2), "Decimal2"),
-  cell(+(bd.totalAcquisitionCostARS * item.cantidad).toFixed(2), "Decimal2"),
-  cell(precioVentaML),
-  cell(+calc.comisionML.toFixed(2), "Decimal2"),
-  cell(+calc.costoFijoML.toFixed(2), "Decimal2"),
-  cell(+calc.envioGratisML.toFixed(2), "Decimal2"),
-  cell(+calc.gananciaNetaARS.toFixed(2), "Decimal2"),
-  cell(calc.margen),
-  cell(+gananciaTotal.toFixed(2), "Decimal2"),
-);
+      return row(
+    cell(idx + 1),
+    cell(item.nombre),
+    cell(item.ncm || "-"),
+    cell(item.cantidad),
+    cell(item.precioCompraCNY, "Decimal2"),
+    cell(item.pesoGramos),
+    cell(+(item.precioCompraCNY * item.cantidad).toFixed(2), "Decimal2"),
+    cell(item.pesoGramos * item.cantidad),
+    cell(+bd.itemValueUSD.toFixed(2), "Decimal2"),
+    cell(+bd.baseShipping.toFixed(2), "Decimal2"),
+    cell(+bd.insurance.toFixed(2), "Decimal2"),
+    cell(+bd.dhlHandlingFee.toFixed(2), "Decimal2"),
+    cell(+bd.totalLogisticsUSD.toFixed(2), "Decimal2"),
+    cell(+bd.customsFreight.toFixed(2), "Decimal2"),
+    cell(+bd.cifValue.toFixed(2), "Decimal2"),
+    cell(+bd.dutyAmount.toFixed(2), "Decimal2"),
+    cell(+bd.statisticalAmount.toFixed(2), "Decimal2"),
+    cell(+bd.vatAmount.toFixed(2), "Decimal2"),
+    cell(+bd.totalTaxesUSD.toFixed(2), "Decimal2"),
+    cell(+bd.totalAcquisitionCostUSD.toFixed(2), "Decimal2"),
+    cell(+bd.totalAcquisitionCostARS.toFixed(2), "Decimal2"),
+    cell(+(bd.totalAcquisitionCostARS * item.cantidad).toFixed(2), "Decimal2"),
+    cell(precioVentaML),
+    cell(+calc.comisionML.toFixed(2), "Decimal2"),
+    cell(+calc.costoFijoML.toFixed(2), "Decimal2"),
+    cell(+calc.envioGratisML.toFixed(2), "Decimal2"),
+    cell(+calc.gananciaNetaARS.toFixed(2), "Decimal2"),
+    cell(calc.margen),
+    cell(+gananciaTotal.toFixed(2), "Decimal2"),
+  );
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error en cálculo';
+      return row(
+        cell(idx + 1),
+        cell(item.nombre),
+        cell("ERROR"),
+        cell(item.cantidad),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(errorMsg),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+        cell(""),
+      );
+    }
   });
 
   const totalRow = row(

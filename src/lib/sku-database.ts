@@ -1,4 +1,5 @@
 // src/lib/sku-database.ts
+import { MARGEN_RENTABLE_THRESHOLD } from "./calculator-utils";
 
 export interface SkuData {
   id: string;
@@ -43,7 +44,8 @@ export function getAllSkus(): SkuData[] {
       precioVentaML: s.precioVentaML || s.precio || 0,
       margen: s.margen || 0,
       gananciaNetaARS: s.gananciaNetaARS || 0,
-      rentable: s.rentable || s.margen >= 30 || false,
+      // Usar valor guardado de rentable si existe, sino calcularlo desde margen
+      rentable: s.rentable !== undefined ? s.rentable : (s.margen >= MARGEN_RENTABLE_THRESHOLD),
       fechaCreacion: s.fechaCreacion || s.fecha || new Date().toISOString(),
       fechaActualizacion: s.fechaActualizacion || s.fecha || new Date().toISOString(),
       notas: s.notas || "",

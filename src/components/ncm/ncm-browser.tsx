@@ -73,8 +73,13 @@ export function NcmBrowser({ onSelect, compact = false }: NcmBrowserProps) {
 
   const handleDelete = (hsCode: string) => {
     if (confirm(`¿Eliminar ${hsCode} de la base local?`)) {
-      deleteNcmEntry(hsCode);
-      setAllEntries(getAllEntries());
+      try {
+        deleteNcmEntry(hsCode);
+        setAllEntries(getAllEntries());
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al eliminar entrada';
+        alert(`Error: ${message}`);
+      }
     }
   };
 
@@ -85,9 +90,14 @@ export function NcmBrowser({ onSelect, compact = false }: NcmBrowserProps) {
   };
 
   const handleSaveNotes = (hsCode: string) => {
-    updateNcmNotes(hsCode, notesText);
-    setEditingNotes(null);
-    setAllEntries(getAllEntries());
+    try {
+      updateNcmNotes(hsCode, notesText);
+      setEditingNotes(null);
+      setAllEntries(getAllEntries());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar notas';
+      alert(`Error: ${message}`);
+    }
   };
 
   const handleExport = () => {

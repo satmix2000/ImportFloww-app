@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { suggestHsCode, type HsCodeSuggestionOutput } from "@/ai/flows/hs-code-suggestion";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/calculator-utils";
-import { saveNcmEntry, initializeDatabaseWithSeed, searchNcm, type NcmEntry } from "@/lib/ncm-database";
+import { saveNcmEntry, initializeNcmDatabaseOnce, searchNcm, type NcmEntry } from "@/lib/ncm-database";
 
 const formSchema = z.object({
   itemValueCNY: z.coerce.number().min(0, "Debe ser positivo"),
@@ -97,7 +97,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     }
   };
 
-  useEffect(() => { fetchRates(); initializeDatabaseWithSeed(); }, []);
+  useEffect(() => { fetchRates(); initializeNcmDatabaseOnce(); }, []);
 
   const watchCNY = form.watch("itemValueCNY");
   const watchRate = form.watch("exchangeRate");
@@ -154,7 +154,7 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
       return;
     }
     const results = searchNcm(q);
-    setLocalDbResults(results.slice(0, 8).map(r => r.entry));
+    setLocalDbResults(results.slice(0, 8).map(r => r.entry).filter(Boolean));
   };
 
   // Seleccionar de base local
@@ -176,44 +176,61 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     if (s.suggestedVatRate !== undefined) form.setValue("vatRate", s.suggestedVatRate);
 
     // Auto-guardar en la base de datos NCM local
-    saveNcmEntry({
-      hsCode: s.hsCode,
-      description: form.getValues("productDescription"),
-      tariffCategory: s.tariffCategory || "",
-      reasoning: s.reasoning || "",
-      suggestedTariffRate: s.suggestedTariffRate ?? form.getValues("tariffRate"),
-      suggestedStatisticalFee: s.suggestedStatisticalFee ?? form.getValues("statisticalFee"),
-      suggestedVatRate: s.suggestedVatRate ?? form.getValues("vatRate"),
-      origin: "ai",
-      tags: [],
-    });
+    try {
+      saveNcmEntry({
+        hsCode: s.hsCode,
+        description: form.getValues("productDescription"),
+        tariffCategory: s.tariffCategory || "",
+        reasoning: s.reasoning || "",
+        suggestedTariffRate: s.suggestedTariffRate ?? form.getValues("tariffRate"),
+        suggestedStatisticalFee: s.suggestedStatisticalFee ?? form.getValues("statisticalFee"),
+        suggestedVatRate: s.suggestedVatRate ?? form.getValues("vatRate"),
+        origin: "ai",
+        tags: [],
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar entrada NCM';
+      alert(`Advertencia: ${message}`);
+    }
   };
 
   return (
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-          {/* Card FOB */}
-          <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
-            <CardHeader className="bg-primary text-primary-foreground pb-6">
+          {/* Card FOB - PREMIUM REDESIGN */}
+          <Card className="border border-primary/20 shadow-premium-lg overflow-hidden bg-gradient-to-br from-white via-primary/5 to-white">
+            <CardHeader className="bg-gradient-premium text-primary-foreground pb-8">
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Calculator className="w-5 h-5" />
-                  <CardTitle className="font-headline tracking-tight">Valor FOB (China)</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <Calculator className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-black tracking-tight">Valor FOB</CardTitle>
+                    <p className="text-xs text-white/70 mt-1">Precio de compra en China</p>
+                  </div>
                 </div>
-                <Button type="button" variant="ghost" size="icon" onClick={fetchRates} disabled={isRatesLoading}>
-                  {isRatesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={fetchRates}
+                  disabled={isRatesLoading}
+                  className="text-white hover:bg-white/20"
+                >
+                  {isRatesLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCcw className="w-5 h-5" />}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="itemValueCNY"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex justify-between items-center mb-1">
-                      <FormLabel>Monto en Yuanes</FormLabel>
+                    <div className="flex justify-between items-center mb-3">
+                      <FormLabel className="text-base font-bold">Monto en Yuanes</FormLabel>
                       <button
                         type="button"
                         onClick={() => {
@@ -227,15 +244,22 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                             form.setValue("fobAdjustmentUSD", currentAdj + discountUSD);
                           }
                         }}
-                        className="text-[9px] text-slate-300 hover:text-primary transition-all flex items-center gap-1 opacity-40 hover:opacity-100 px-1 border border-transparent hover:border-slate-100 rounded"
+                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-primary/10"
                       >
-                        <Sparkles className="w-2.5 h-2.5" />
-                        <span>adj.</span>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Ajustar -30%</span>
                       </button>
                     </div>
-                    <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                    <FormDescription className="text-xs font-bold text-primary">
-                      Equivalente: {formatCurrency(usdEquivalent)} USD
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-primary/20 focus:border-primary rounded-lg transition-colors"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-sm font-bold text-primary mt-3 bg-primary/10 px-3 py-2 rounded-lg">
+                      ≈ {formatCurrency(usdEquivalent)} USD
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -246,19 +270,26 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="exchangeRate"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex justify-between items-center mb-1">
-                      <FormLabel>Tasa CNY/USD</FormLabel>
+                    <div className="flex justify-between items-center mb-3">
+                      <FormLabel className="text-base font-bold">Tasa CNY/USD</FormLabel>
                       <FormField
                         control={form.control}
                         name="usdToArsRate"
                         render={({ field: arsField }) => (
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                            Blue: ${arsField.value}
+                          <span className="text-xs font-bold text-white bg-gradient-premium px-3 py-1.5 rounded-full">
+                            USD/ARS: ${arsField.value}
                           </span>
                         )}
                       />
                     </div>
-                    <FormControl><Input type="number" step="0.0001" {...field} /></FormControl>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.0001"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-primary/20 focus:border-primary rounded-lg transition-colors"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -266,22 +297,33 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
             </CardContent>
           </Card>
 
-          {/* Card Logistica */}
-          <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
-            <CardHeader className="bg-slate-800 text-white pb-6">
-              <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-accent" />
-                <CardTitle className="font-headline tracking-tight">Logistica y Flete</CardTitle>
+          {/* Card Logistica - PREMIUM REDESIGN */}
+          <Card className="border border-accent/20 shadow-premium-lg overflow-hidden bg-gradient-to-br from-white via-accent/5 to-white">
+            <CardHeader className="bg-gradient-to-r from-slate-900 via-primary to-accent text-white pb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-black tracking-tight">Logística y Flete</CardTitle>
+                  <p className="text-xs text-white/70 mt-1">Costos de envío desde China</p>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Peso Total (gramos)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormLabel className="text-base font-bold">Peso Total (gramos)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-accent/20 focus:border-accent rounded-lg transition-colors mt-3"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -291,10 +333,17 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="shippingCostPerKg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Flete por Kilo (USD)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                    <FormDescription className="text-[10px] text-slate-400">
-                      Tarifa del forwarder por kg
+                    <FormLabel className="text-base font-bold">Flete por Kg (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-accent/20 focus:border-accent rounded-lg transition-colors mt-3"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs text-muted-foreground mt-2">
+                      Tarifa del forwarder por kilogramo
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -305,9 +354,16 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="customsFreightPercentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Flete Aduanero (%)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                    <FormDescription className="text-[10px] text-slate-400">
+                    <FormLabel className="text-base font-bold">Flete Aduanero (%)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-accent/20 focus:border-accent rounded-lg transition-colors mt-3"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs text-muted-foreground mt-2">
                       % del FOB que DHL declara ante Aduana
                     </FormDescription>
                     <FormMessage />
@@ -319,10 +375,17 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
                 name="miscellaneous"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gastos Varios (USD)</FormLabel>
-                    <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                    <FormDescription className="text-[10px] text-slate-400">
-                      Otros gastos no incluidos arriba
+                    <FormLabel className="text-base font-bold">Gastos Varios (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        className="h-11 text-base font-semibold border-2 border-accent/20 focus:border-accent rounded-lg transition-colors mt-3"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs text-muted-foreground mt-2">
+                      Otros gastos no incluidos
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -331,15 +394,20 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
             </CardContent>
           </Card>
 
-          {/* Card Aduana e IA */}
-          <Card className="border-none shadow-md bg-white/80 backdrop-blur-sm">
-            <CardHeader className="bg-slate-100 text-slate-900 border-b pb-4">
-              <div className="flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-primary" />
-                <CardTitle className="font-headline tracking-tight text-lg">Impuestos e Inteligencia NCM</CardTitle>
+          {/* Card Aduana e IA - PREMIUM REDESIGN */}
+          <Card className="border border-primary/20 shadow-premium-lg bg-gradient-to-br from-white via-primary/5 to-white overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary via-accent to-cyan-500 text-white pb-8 border-b-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  <Landmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-black tracking-tight">Impuestos e Inteligencia NCM</CardTitle>
+                  <p className="text-xs text-white/70 mt-1">Clasificación arancelaria y análisis automático</p>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-8 space-y-6">
               <FormField
                 control={form.control}
                 name="productDescription"

@@ -2,32 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Geist:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Paleta Premium Azul Profesional */
+    --background: 210 40% 98%;
+    --foreground: 220 13% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 13% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 47% 22%;
+    --popover-foreground: 220 13% 10%;
+
+    /* Primary: Azul Profesional */
+    --primary: 220 90% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 25 95% 53%;
+
+    /* Secondary: Azul claro */
+    --secondary: 210 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: Grises profesionales */
+    --muted: 210 14% 94%;
+    --muted-foreground: 220 8% 46%;
+
+    /* Accent: Cyan vibrante */
+    --accent: 188 100% 50%;
     --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Rojo profesional */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 222 47% 22%;
-    --radius: 0.75rem;
-    --chart-1: 222 47% 22%;
-    --chart-2: 25 95% 53%;
+
+    /* Border & Input */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 90% 35%;
+
+    /* Radius */
+    --radius: 0.875rem;
+
+    /* Charts con gradientes tech */
+    --chart-1: 220 90% 35%;
+    --chart-2: 188 100% 50%;
     --chart-3: 160 84% 39%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
@@ -46,6 +63,7 @@
   }
 }
 
+/* ===== ANIMACIONES PREMIUM ===== */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-8px) rotate(1deg); }
@@ -74,6 +92,31 @@
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 212, 255, 0.3), 0 0 16px rgba(0, 81, 186, 0.1); }
+  50% { box-shadow: 0 0 12px rgba(0, 212, 255, 0.5), 0 0 24px rgba(0, 81, 186, 0.2); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes slide-in-bottom {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 @keyframes ship-sway {
@@ -108,6 +151,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Clases de animación */
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-float-delayed { animation: float-delayed 5s ease-in-out infinite; animation-delay: 1s; }
 .animate-slide-in-right { animation: slide-in-right 0.5s ease-out forwards; }
@@ -117,51 +161,99 @@
 .animate-plane { animation: plane-fly 8s ease-in-out infinite; }
 .animate-container { animation: container-move 5s ease-in-out infinite; }
 .animate-dash { animation: dash 2s linear infinite; }
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+.animate-slide-in-bottom { animation: slide-in-bottom 0.5s ease-out forwards; }
+.animate-fade-in-scale { animation: fade-in-scale 0.4s ease-out forwards; }
+.animate-bounce-gentle { animation: bounce-gentle 3s ease-in-out infinite; }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: hsl(210 20% 98%); }
-::-webkit-scrollbar-thumb { background: hsl(214 20% 85%); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(222 47% 22%); }
+/* ===== SCROLLBAR PREMIUM ===== */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: hsl(210 40% 98%); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(220 90% 35%) 0%, hsl(188 100% 50%) 100%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(220 90% 40%); }
 
+/* ===== GRADIENTES PREMIUM ===== */
 .text-gradient {
-  background: linear-gradient(135deg, hsl(222 47% 22%) 0%, hsl(222 47% 40%) 100%);
+  background: linear-gradient(135deg, hsl(220 90% 35%) 0%, hsl(188 100% 50%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+.text-gradient-secondary {
+  background: linear-gradient(135deg, hsl(220 90% 35%) 0%, hsl(220 13% 10%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+.bg-gradient-premium {
+  background: linear-gradient(135deg, hsl(220 90% 35%) 0%, hsl(188 100% 50%) 100%);
+}
+
+.bg-gradient-dark {
+  background: linear-gradient(135deg, hsl(220 13% 10%) 0%, hsl(220 90% 35%) 100%);
+}
+
+/* ===== GLASS MORPHISM ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+/* ===== SOMBRAS ELEVADAS ===== */
+.shadow-premium {
+  box-shadow: 0 4px 24px rgba(0, 81, 186, 0.12);
+}
+
+.shadow-premium-lg {
+  box-shadow: 0 8px 32px rgba(0, 81, 186, 0.16);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.2), 0 4px 24px rgba(0, 81, 186, 0.12);
+}
+
+/* ===== TYPOGRAPHY ===== */
 .font-mono-nums {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-variant-numeric: tabular-nums;
 }
 
 ::selection {
-  background: hsl(222 47% 22% / 0.15);
-  color: hsl(222 47% 11%);
+  background: hsl(220 90% 35% / 0.15);
+  color: hsl(220 13% 10%);
 }
 
+/* ===== ACCENT LINE ===== */
 .accent-line {
   width: 40px;
   height: 3px;
-  background: hsl(25 95% 53%);
+  background: linear-gradient(90deg, hsl(220 90% 35%) 0%, hsl(188 100% 50%) 100%);
   border-radius: 2px;
 }
 
-/* === TICKER === */
+/* ===== TICKER PREMIUM ===== */
 .ticker-bar {
-  background: #000;
+  background: linear-gradient(90deg, hsl(220 13% 10%) 0%, hsl(220 20% 15%) 100%);
   overflow: hidden;
-  height: 46px;
+  height: 48px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid hsl(220 20% 20%);
+  box-shadow: 0 4px 12px rgba(0, 81, 186, 0.1);
 }
 
 .ticker-content {
@@ -179,31 +271,58 @@
 .ticker-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 30px;
+  gap: 12px;
+  padding: 0 32px;
 }
 
 .ticker-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #22d3ee;
-  box-shadow: 0 0 4px rgba(34, 211, 238, 0.6);
+  background-color: hsl(188 100% 50%);
+  box-shadow: 0 0 8px hsl(188 100% 50% / 0.6);
   flex-shrink: 0;
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
 .ticker-label {
-  font-family: 'VT323', monospace;
-  font-size: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: hsl(220 8% 56%);
 }
 
 .ticker-value {
-  font-family: 'VT323', monospace;
-  font-size: 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.08em;
+  background: linear-gradient(90deg, hsl(188 100% 50%) 0%, hsl(220 90% 50%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== HOVER STATES ===== */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover\:shadow-glow:hover {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 8px 32px rgba(0, 81, 186, 0.16);
+}
+
+/* ===== FOCUS STATES ===== */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(220 90% 35% / 0.1), 0 0 0 1px hsl(220 90% 35%);
+}
+
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(220 90% 35% / 0.1);
 }

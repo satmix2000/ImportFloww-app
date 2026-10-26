@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatYuan, formatARS, type ImportBreakdown } from "@/lib/calculator-utils";
+import { formatCurrency, formatYuan, formatARS, type ImportBreakdown, calcularMetricasML } from "@/lib/calculator-utils";
 import { ImportFormData } from "./import-form";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getMLConfig } from "@/lib/ml-constants";
@@ -24,38 +24,15 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
   const [saved, setSaved] = useState(false);
 
   const mlConfig = getMLConfig();
-  const precioCompetencia = formData.precioCompetenciaML || 0;
   const comisionPorcentaje = formData.comisionMLPorcentaje || mlConfig.comisionPorcentaje;
+  const precioCompetencia = formData.precioCompetenciaML || 0;
   const costoImportacionARS = breakdown.totalAcquisitionCostARS;
 
-  // Simulacion ML
+  // Simulacion ML - usa función centralizada
   let simulacionML = null;
 
   if (precioCompetencia > 0) {
-    const comisionPesos = precioCompetencia * (comisionPorcentaje / 100);
-
-    // Costo fijo FULL desde config
-    const rangoFijo = mlConfig.costosFijos.find(r => precioCompetencia <= r.hasta);
-    const costoFijoML = rangoFijo?.costo || 0;
-
-    // Envío gratis desde config
-    const rangoEnvio = mlConfig.envioGratis.find(
-      r => precioCompetencia >= r.desde && precioCompetencia <= r.hasta
-    );
-    const envioGratisML = rangoEnvio?.costo || 0;
-
-    const gananciaNetaARS = precioCompetencia - comisionPesos - costoFijoML - envioGratisML - costoImportacionARS;
-    const margenRealPercentage = (gananciaNetaARS / precioCompetencia) * 100;
-    const esRentable = margenRealPercentage >= 30;
-
-    simulacionML = {
-      comisionPesos,
-      costoFijoML,
-      envioGratisML,
-      gananciaNetaARS,
-      margenRealPercentage: Number(margenRealPercentage.toFixed(2)),
-      esRentable
-    };
+    simulacionML = calcularMetricasML(precioCompetencia, costoImportacionARS);
   }
 
   // Cargar SKUs guardados
@@ -94,7 +71,7 @@ export function ResultsDisplay({ formData, breakdown }: ResultsDisplayProps) {
       ncm: formData.hsCode || existente?.ncm || "",
       precioCompraCNY: formData.itemValueCNY || existente?.precioCompraCNY || 0,
       pesoGramos: formData.weight || existente?.pesoGramos || 100,
-      costoEnvioUnitarioUSD: existente?.costoEnvioUnitarioUSD || 0,
+      costoEnvioUnitarioUSD: breakdown.baseShipping,
       precioVentaML: precioCompetencia,
       margen: simulacionML?.margenRealPercentage || 0,
       gananciaNetaARS: simulacionML?.gananciaNetaARS || 0,
