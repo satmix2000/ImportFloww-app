@@ -169,6 +169,32 @@ export function ImportForm({ onCalculate }: ImportFormProps) {
     setLocalDbResults([]);
   };
 
+  // Seleccionar de IA
+  const selectSuggestion = (s: any) => {
+    form.setValue("hsCode", s.hsCode);
+    if (s.suggestedTariffRate !== undefined) form.setValue("tariffRate", s.suggestedTariffRate);
+    if (s.suggestedStatisticalFee !== undefined) form.setValue("statisticalFee", s.suggestedStatisticalFee);
+    if (s.suggestedVatRate !== undefined) form.setValue("vatRate", s.suggestedVatRate);
+
+    // Auto-guardar en la base de datos NCM local
+    try {
+      saveNcmEntry({
+        hsCode: s.hsCode,
+        description: form.getValues("productDescription"),
+        tariffCategory: s.tariffCategory || "",
+        reasoning: s.reasoning || "",
+        suggestedTariffRate: s.suggestedTariffRate ?? form.getValues("tariffRate"),
+        suggestedStatisticalFee: s.suggestedStatisticalFee ?? form.getValues("statisticalFee"),
+        suggestedVatRate: s.suggestedVatRate ?? form.getValues("vatRate"),
+        origin: "ai",
+        tags: [],
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar entrada NCM';
+      alert(`Advertencia: ${message}`);
+    }
+  };
+
   return (
     <div className="grid gap-6">
       <Form {...form}>
